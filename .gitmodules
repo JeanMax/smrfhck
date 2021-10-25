@@ -1,0 +1,6 @@
+[submodule "extern/libsmrf"]
+	path = extern/libsmrf
+	url = https://github.com/JeanMax/libsmrf
+[submodule "extern/imgui"]
+	path = extern/imgui
+	url = https://github.com/ocornut/imgui
