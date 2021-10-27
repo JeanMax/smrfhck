@@ -21,6 +21,16 @@
 
 #include <unistd.h> // sleep
 
+
+
+// graphics.cpp
+typedef void t_frame_callback(void *data);
+
+BOOL render_loop(t_frame_callback frame_callback, void *data);
+void draw_rect(float x, float y, float w, float h, ImColor *color);
+
+
+#define WINDOW_NAME   "smrfhck"
 #define WINDOW_WIDTH  480
 #define WINDOW_HEIGHT 600
 
@@ -30,7 +40,7 @@
 #define COLOR_RED_2     0.804f,  0.333f, 0.259f
 #define COLOR_GREEN_1   0.0667f, 0.514f, 0.282f
 // #define COLOR_GREEN_2   0.208f,  0.596f, 0.349f
-#define COLOR_GREEN_2   0.317,   0.686,  0.435
+#define COLOR_GREEN_2   0.317f,  0.686f, 0.435f
 #define COLOR_YELLOW_1  0.729f,  0.729f, 0.212f
 #define COLOR_YELLOW_2  0.722f,  0.718f, 0.294f
 #define COLOR_BLUE_1    0.259f,  0.467f, 0.694f
@@ -43,8 +53,8 @@
 #define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
 
-#define SQRT2  1.41421356
-#define COS_45 (SQRT2 / 2)
+#define SQRT2  1.41421356f
+#define COS_45 (SQRT2 / 2.f)
 #define SIN_45 COS_45
 
 #endif

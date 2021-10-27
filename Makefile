@@ -27,7 +27,7 @@ LSMRF_LIB = $(LSMRF_DIR)/libsmrf.a
 IMGUI_DIR = extern/imgui
 
 # file-names of the sources
-SRC_NAME = main.cpp \
+SRC_NAME = main.cpp graphics.cpp \
            imgui_impl_sdl.cpp imgui_impl_opengl3.cpp \
            imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp # imgui_demo.cpp
 
@@ -56,18 +56,18 @@ CPPFLAGS =
 ##
 
 # compilation/linking flags for the differents public rules
-WFLAGS = -std=c++11 -Wextra -Wall  # warnings
+WFLAGS = -std=c++11 -Wextra -Wall -Winline  # warnings
 RCFLAGS = $(WFLAGS) -O2  # release
 DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG  # debug
 SCFLAGS = $(DCFLAGS) -fsanitize=address,undefined  # sanitize
-WWFLAGS = $(WFLAGS) -Wpedantic -Wold-style-cast -Woverloaded-virtual \
+WWFLAGS = $(WFLAGS) -Wpedantic -Woverloaded-virtual \
                     -Wfloat-equal -Wwrite-strings -Wcast-align -Wconversion \
                     -Wshadow -Wredundant-decls -Winit-self \
                     -Wswitch-default -Wswitch-enum -Wundef -Winline \
                     -Wunreachable-code -Wcast-qual -Wctor-dtor-privacy \
                     -Wdisabled-optimization -Wsign-conversion -Wsign-promo \
                     -Wformat=2 -Wmissing-declarations -Wmissing-include-dirs \
-                    -Wstrict-overflow=5  # -Weffc++ -Wpadded
+                    -Wstrict-overflow=5 -Winline # -Weffc++ -Wpadded
 
 
 # folder used to store all compilations sub-products (.o and .d mostly)
