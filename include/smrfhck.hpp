@@ -19,12 +19,18 @@
 
 #include "smrf.h"
 
-#define COLOR_WHITE_1   0.141f,  0.141f, 0.141f  //fg
-#define COLOR_WHITE_2   0.376f,  0.376f, 0.376f
+#include <unistd.h> // sleep
+
+#define WINDOW_WIDTH  480
+#define WINDOW_HEIGHT 600
+
+#define COLOR_BLACK_1   0.141f,  0.141f, 0.141f  //fg
+#define COLOR_BLACK_2   0.376f,  0.376f, 0.376f
 #define COLOR_RED_1     0.678f,  0.208f, 0.133f
 #define COLOR_RED_2     0.804f,  0.333f, 0.259f
 #define COLOR_GREEN_1   0.0667f, 0.514f, 0.282f
-#define COLOR_GREEN_2   0.208f,  0.596f, 0.349f
+// #define COLOR_GREEN_2   0.208f,  0.596f, 0.349f
+#define COLOR_GREEN_2   0.317,   0.686,  0.435
 #define COLOR_YELLOW_1  0.729f,  0.729f, 0.212f
 #define COLOR_YELLOW_2  0.722f,  0.718f, 0.294f
 #define COLOR_BLUE_1    0.259f,  0.467f, 0.694f
@@ -33,8 +39,8 @@
 #define COLOR_MAGENTA_2 0.749f,  0.478f, 0.867f
 #define COLOR_CYAN_1    0.0f,    0.529f, 0.51f
 #define COLOR_CYAN_2    0.157f,  0.69f,  0.612f
-#define COLOR_BLACK_1   0.741f,  0.741f, 0.702f
-#define COLOR_BLACK_2   0.8f,    0.8f,   0.8f    //bg
+#define COLOR_WHITE_1   0.741f,  0.741f, 0.702f
+#define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
 
 #define SQRT2  1.41421356

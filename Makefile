@@ -190,7 +190,7 @@ test: all
 ##
 
 # create binary (link)
-$(PROJECT): $(OBJ)
+$(PROJECT): $(OBJ) $(LSMRF_LIB)
 	$(CXX) $(CFLAGS) $(INC) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
 
 # create object files (compile)

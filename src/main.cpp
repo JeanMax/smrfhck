@@ -7,12 +7,174 @@
 
 SDL_Window *window;
 SDL_GLContext gl_context;
-std::mutex mtx;
 
-static BOOL is_shrine(DWORD id)
+ImColor red(COLOR_RED_1, 0.8f);
+ImColor green(COLOR_GREEN_1, 0.8f);
+ImColor green_bis(COLOR_GREEN_2, 0.8f);
+ImColor blue(COLOR_BLUE_1, 0.8f);
+ImColor yellow(COLOR_YELLOW_1, 0.8f);
+ImColor cyan(COLOR_CYAN_1, 0.8f);
+ImColor magenta(COLOR_MAGENTA_1, 0.8f);
+ImColor white(COLOR_WHITE_1, 0.8f);
+ImColor black(COLOR_BLACK_1, 0.8f);
+
+#define ABS(x) ((x) > 0 ? (x) : -(x))
+
+
+static void draw_rect(float x, float y, float w, float h, ImColor *color)
+{
+    ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+    ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+    vMin.x += ImGui::GetWindowPos().x;
+    vMin.y += ImGui::GetWindowPos().y;
+    vMax.x += ImGui::GetWindowPos().x;
+    vMax.y += ImGui::GetWindowPos().y;
+
+    // printf("win: (%f, %f) (%f, %f)\n", vMin.x, vMin.y, vMax.x, vMax.y);
+
+    // assume 0 >= x,y,w,h >= 1, 1 == full width/height
+    float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
+    x *= max_size;
+    y *= max_size;
+    w *= max_size;
+    h *= max_size;
+
+    // printf("max_size: %f\n", max_size);
+
+
+    ImVec2 rect_a(x, y);
+    ImVec2 rect_b(x + w, y);
+    ImVec2 rect_c(x + w, y + h);
+    ImVec2 rect_d(x, y + h);
+
+    rect_a = ImRotate(rect_a, COS_45, SIN_45);
+    rect_b = ImRotate(rect_b, COS_45, SIN_45);
+    rect_c = ImRotate(rect_c, COS_45, SIN_45);
+    rect_d = ImRotate(rect_d, COS_45, SIN_45);
+
+    //window offset
+    rect_a.x += vMin.x, rect_a.y += vMin.y;
+    rect_b.x += vMin.x, rect_b.y += vMin.y;
+    rect_c.x += vMin.x, rect_c.y += vMin.y;
+    rect_d.x += vMin.x, rect_d.y += vMin.y;
+
+    //compensate rotate
+    ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
+    rect_a.x += win_center.x;//, rect_a.y += vMin.y;
+    rect_b.x += win_center.x;//, rect_b.y += vMin.y;
+    rect_c.x += win_center.x;//, rect_c.y += vMin.y;
+    rect_d.x += win_center.x;//, rect_d.y += vMin.y;
+
+    // printf("rect: (%f, %f) (%f, %f)\n",
+    //        rect_a.x, rect_b.y,
+    //     );
+
+
+    ImGui::GetWindowDrawList()->AddQuadFilled(
+        rect_a,
+        rect_b,
+        rect_c,
+        rect_d,
+        // ImGui::ColorConvertFloat4ToU32(ImVec4(1, .15, .15, 1)) );
+        *color);
+    // ImGui::GetWindowDrawList()->PushClipRectFullScreen();
+}
+
+static BOOL init()
+{
+    // Setup SDL
+    // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
+    // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
+    {
+        printf("Error: %s\n", SDL_GetError());
+        return FALSE;
+    }
+
+    // Decide GL+GLSL versions
+#if defined(IMGUI_IMPL_OPENGL_ES2)
+    // GL ES 2.0 + GLSL 100
+    const char* glsl_version = "#version 100";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#elif defined(__APPLE__)
+    // GL 3.2 Core + GLSL 150
+    const char* glsl_version = "#version 150";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
+#else
+    // GL 3.0 + GLSL 130
+    const char* glsl_version = "#version 130";
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+#endif
+
+    // Create window with graphics context
+    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
+    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
+    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    window = SDL_CreateWindow("smrfhck",
+                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                              WINDOW_WIDTH, WINDOW_HEIGHT,
+                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    gl_context = SDL_GL_CreateContext(window);
+    SDL_GL_MakeCurrent(window, gl_context);
+    SDL_GL_SetSwapInterval(1); // Enable vsync
+
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    // ImGuiIO& io = ImGui::GetIO();
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+    //ImGui::StyleColorsClassic();
+
+    // Setup Platform/Renderer backends
+    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
+    ImGui_ImplOpenGL3_Init(glsl_version);
+
+    return TRUE;
+}
+
+inline static void render(void)
+{
+    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    static ImGuiIO& io = ImGui::GetIO();
+    ImGui::Render();
+    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
+    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
+    glClear(GL_COLOR_BUFFER_BIT);
+    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+    SDL_GL_SwapWindow(window);
+}
+
+static void finit()
+{
+    ImGui_ImplOpenGL3_Shutdown();
+    ImGui_ImplSDL2_Shutdown();
+    ImGui::DestroyContext();
+
+    SDL_GL_DeleteContext(gl_context);
+    SDL_DestroyWindow(window);
+    SDL_Quit();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+inline static BOOL is_shrine(DWORD id)
 {
     return id == 2   // Shrine
         || id == 77  // Healthorama
+        || id == 81  // Forest Altar
         || id == 83  // Shrine
         || id == 84  // HealingWell
         || id == 85  // HealthShrine
@@ -117,7 +279,7 @@ static BOOL is_shrine(DWORD id)
         // || id == 31  // Fountain
 }
 
-static BOOL is_quest(DWORD id)
+inline static BOOL is_quest(DWORD id)
 {
     return id == 8   // Tower Tome
         || id == 17  // StoneAlpha
@@ -127,7 +289,6 @@ static BOOL is_quest(DWORD id)
         || id == 21  // StoneLambda
         || id == 22  // StoneTheta
         || id == 30  // Inifuss Tree
-        || id == 81  // Forest Altar
         || id == 108 // Malus
         || id == 152 // Holder For Horadric Staff
         || id == 193 // Lam Esen's Tome
@@ -150,13 +311,14 @@ static BOOL is_quest(DWORD id)
         || id == 458 // Temple Altar
         || id == 460 // Drehya Outside Town
         || id == 462 // Nihlathak Outside Town
-        || id == 523 //  Blacksmith
+        // || id == 523 //  Blacksmith // it's larzuk forge eh
         || id == 473 // Caged Fellow
         || id == 546 // AncientsAltar
-        || id == 558; // Frozen Anya
+        || id == 558 // Frozen Anya
+        || id == 742; // tristram portal
 }
 
-static BOOL is_waypoint(DWORD id)
+inline static BOOL is_waypoint(DWORD id)
 {
     return id == 119 // Waypoint Portal
         || id == 145 // Waypointi Inner Hell
@@ -176,13 +338,15 @@ static BOOL is_waypoint(DWORD id)
         || id == 511; // IcecaveWaypoint
 }
 
-static BOOL is_transit(DWORD id)
+inline static BOOL is_transit(DWORD id)
 {
-    return id == 74  // Trap Door
+    return id == 59  // Town Portal
+        || id == 74  // Trap Door
+        || id == 60  // Permanent Town Portal
         || id == 194 // Stairsl
         || id == 195 // Stairsr
-        || id == 244 // Sewers
-        || id == 246 // Sewers
+        // || id == 244 // Sewers
+        // || id == 246 // Sewers
         || id == 262 // Cathedral
         || id == 263 // Jail
         || id == 264 // Jail
@@ -199,181 +363,246 @@ static BOOL is_transit(DWORD id)
         || id == 565 // Last Cinematic
         || id == 566 // Harrogath LastPortal
         || id == 569; // ThroneOfDest Portal
-        // || id == 59  // Town Portal
-        // || id == 60  // Permanent Town Portal
         // || id == 189 // Cain Portal
         // || id == 268 // Wirt's Body
         // || id == 377 // Portal To Guild
         // || id == 451 // Hellgate
 }
 
-static BOOL is_interesting_preset(DWORD id)
+// static BOOL is_interesting_preset(DWORD id)
+// {
+//     return is_quest(id)
+//         || is_shrine(id)
+//         || is_waypoint(id)
+//         || is_transit(id)
+//         || id == 267; // Bank
+// }
+
+static BOOL is_uninteresting_unit(DWORD id)
 {
-    return is_quest(id)
-        || is_shrine(id)
-        || is_waypoint(id)
-        || is_transit(id)
-        || id == 267; // Bank
+    return id == 149 // rock
+        || id == 152 // rogue
+        || id == 179 // cow
+        || id == 195 // lut gholein stuff
+        || id == 196 // lut gholein tree
+        || id == 197 // lut gholein stuff
+        || id == 203 // lut gholein npc
+        || id == 205 // lut gholein npc
+        || id == 294 // kurast stuff
+        || id == 296 // kurast stuff
+        || id == 359 // iron wolf
+        || id == 822 // fallen stuff
+        || id == 823 // fallen stuff
+
+        // || id == 513 // drehya
+        // || id == 563 // baal tentacle
+        // || id == 564 // baal tentacle
+        // || id == 565 // baal tentacle
+        // || id == 566 // baal tentacle
+        || id == 567 // baal tentacle
+        || id == 568 // injuried barb
+        || id == 569 // injuried barb
+        || id == 570 // injuried barb
+        // || id == 571 // baal crab clone
+        // || id == 575 // worldstone effect
+        ;
 }
 
-static void draw_rect(float x, float y, float w, float h, ImColor *color)
+static BOOL is_backward_tile(DWORD id)
 {
-    ImVec2 vMin = ImGui::GetWindowContentRegionMin();
-    ImVec2 vMax = ImGui::GetWindowContentRegionMax();
-    vMin.x += ImGui::GetWindowPos().x;
-    vMin.y += ImGui::GetWindowPos().y;
-    vMax.x += ImGui::GetWindowPos().x;
-    vMax.y += ImGui::GetWindowPos().y;
-
-    // printf("win: (%f, %f) (%f, %f)\n", vMin.x, vMin.y, vMax.x, vMax.y);
-
-    // assume 0 >= x,y,w,h >= 1, 1 == full width/height
-    float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
-    x *= max_size;
-    y *= max_size;
-    w *= max_size;
-    h *= max_size;
-
-    // printf("max_size: %f\n", max_size);
-
-
-    ImVec2 rect_a(x, y);
-    ImVec2 rect_b(x + w, y);
-    ImVec2 rect_c(x + w, y + h);
-    ImVec2 rect_d(x, y + h);
-
-    rect_a = ImRotate(rect_a, COS_45, SIN_45);
-    rect_b = ImRotate(rect_b, COS_45, SIN_45);
-    rect_c = ImRotate(rect_c, COS_45, SIN_45);
-    rect_d = ImRotate(rect_d, COS_45, SIN_45);
-
-    //window offset
-    rect_a.x += vMin.x, rect_a.y += vMin.y;
-    rect_b.x += vMin.x, rect_b.y += vMin.y;
-    rect_c.x += vMin.x, rect_c.y += vMin.y;
-    rect_d.x += vMin.x, rect_d.y += vMin.y;
-
-    //compensate rotate
-    ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
-    rect_a.x += win_center.x;//, rect_a.y += vMin.y;
-    rect_b.x += win_center.x;//, rect_b.y += vMin.y;
-    rect_c.x += win_center.x;//, rect_c.y += vMin.y;
-    rect_d.x += win_center.x;//, rect_d.y += vMin.y;
-
-    // printf("rect: (%f, %f) (%f, %f)\n",
-    //        rect_a.x, rect_b.y,
-    //     );
-
-
-    ImGui::GetWindowDrawList()->AddQuadFilled(
-        rect_a,
-        rect_b,
-        rect_c,
-        rect_d,
-        // ImGui::ColorConvertFloat4ToU32(ImVec4(1, .15, .15, 1)) );
-        *color);
-    // ImGui::GetWindowDrawList()->PushClipRectFullScreen();
+    return id == 5 //Cave Down
+        || id == 8 //Crypt Up
+        || id == 11 //Tower to Wilderness
+        || id == 13 //Jail Up
+        || id == 16 //Catacombs to Cathedral
+        || id == 17 //Catacombs Up
+        || id == 21 //Sewer Dock to Town
+        || id == 22 //Sewer Up
+        || id == 25 //Harem to Town
+        || id == 26 //Harem Up 1
+        || id == 27 //Harem Up 2
+        || id == 30 //Basement Up 1
+        || id == 31 //Basement Up 2
+        || id == 45 //Tomb Up
+        || id == 48 //Lair Up
+        || id == 52 //Spider to Jungle
+        || id == 55 //Dungeon Up
+        || id == 58 //Sewer Up L
+        || id == 59 //Sewer Up R
+        || id == 62 //Temple Up L
+        || id == 63 //Temple Up R
+        || id == 65 //Mephisto Up L
+        || id == 66 //Mephisto Up R
+        || id == 70 //Lava to Mesa
+        || id == 73 //Ice Caves Up
+        || id == 78 //Temple Up
+        || id == 81; //Baal Temple Up
 }
 
-static BOOL init()
+static DWORD act_from_area(DWORD area)
 {
-    // Setup SDL
-    // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
-    // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
-        printf("Error: %s\n", SDL_GetError());
-        return FALSE;
+    if (area < 40) {
+        return 1;
+    } else if (area < 75) {
+        return 2;
+    } else if (area < 103) {
+        return 3;
+    } else if (area < 109) {
+        return 4;
+    } else {
+        return 5;
+    }
+}
+
+static DWORD get_level_size(GameState *game)
+{
+    DWORD max = 0;
+                // draw_rect((float)(r2->dwPosX - game->level->dwPosX) * 5.f / (float)max_size,
+                //           (float)(r2->dwPosY - game->level->dwPosY) * 5.f / (float)max_size,
+                //           (float)r2->dwSizeX * 5.f / (float)max_size,
+                //           (float)r2->dwSizeY * 5.f / (float)max_size,
+
+    Room2 *r2 = game->level->pRoom2First;
+    while (r2) {
+        max = MAX(max, (r2->dwPosX - game->level->dwPosX + r2->dwSizeX) * 5 );
+        max = MAX(max, (r2->dwPosY - game->level->dwPosY + r2->dwSizeY) * 5);
+        r2 = r2->pRoom2Next;
+    }
+    return max;
+}
+
+static void draw_level_connection(GameState *game, float max_size)
+{
+    Level *lvl;
+    // LOG_INFO("------------------------------------------------------------------");
+    DWORD act = act_from_area(game->level->dwLevelNo);
+    for (int i = 0; i < MAX_AREA; i++) {
+        lvl = game->all_levels[i];
+        if (!lvl
+            || lvl->dwLevelNo == game->level->dwLevelNo
+            || act_from_area(lvl->dwLevelNo) != act
+            // || ABS((float)lvl->dwLevelNo - (float)game->level->dwLevelNo) > 2
+            ) {
+            continue;
+        }
+
+        if (lvl->pRoom2First) {
+            for (Room2 *r = lvl->pRoom2First; r; r = r->pRoom2Next) {
+                draw_rect(((float)r->dwPosX - (float)game->level->dwPosX) / max_size,
+                          ((float)r->dwPosY - (float)game->level->dwPosY) / max_size,
+                          (float)r->dwSizeX / max_size,
+                          (float)r->dwSizeY / max_size,
+                          &red);
+            }
+        } else {
+            // LOG_INFO("no room2 in lvl %d", lvl->dwLevelNo);
+            draw_rect(((float)lvl->dwPosX - (float)game->level->dwPosX) / max_size,
+                      ((float)lvl->dwPosY - (float)game->level->dwPosY) / max_size,
+                      (float)lvl->dwSizeX / max_size,
+                      (float)lvl->dwSizeY / max_size,
+                      &red); //level
+        }
+
+    }
+}
+
+static void draw_presets(Room2 *r2, Level *level, float max_size)
+{
+    ImColor *color = NULL;
+
+    for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
+        if (pu->dwType == 1) { //monster/npc
+            if (is_uninteresting_unit(pu->dwTxtFileNo)) {
+                continue;
+            }
+            color = &red;
+            // if (pu->dwTxtFileNo < 734) { //super unique boss
+            //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
+            //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
+            // }
+        } else if (pu->dwType == 2) {  //object
+            if (is_waypoint(pu->dwTxtFileNo)) {
+                color = &magenta;
+            } else if (is_quest(pu->dwTxtFileNo)) {
+                color = &blue;
+            } else if (is_shrine(pu->dwTxtFileNo)) {
+                color = &yellow;
+            } else if (is_transit(pu->dwTxtFileNo)) {
+                color = &cyan;
+            } else { //!is_interesting_preset(pu->dwTxtFileNo)
+                continue;
+            }
+        } else if (pu->dwType == 5) {  //tiles
+            if (is_backward_tile(pu->dwTxtFileNo)) {
+                color = &green_bis; //probably not what you're search for
+            } else {
+                color = &green;
+            }
+        } else { // ???
+            color = &white;
+            LOG_INFO("preset: id=%d type=%d (%d, %d)",
+                     pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
+
+        }
+        draw_rect(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size - 0.0125f,
+                  ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size - 0.0125f,
+                  0.025f,
+                  0.025f,
+                  color);
+
     }
 
-    // Decide GL+GLSL versions
-#if defined(IMGUI_IMPL_OPENGL_ES2)
-    // GL ES 2.0 + GLSL 100
-    const char* glsl_version = "#version 100";
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_ES);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#elif defined(__APPLE__)
-    // GL 3.2 Core + GLSL 150
-    const char* glsl_version = "#version 150";
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_FORWARD_COMPATIBLE_FLAG); // Always required on Mac
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 2);
-#else
-    // GL 3.0 + GLSL 130
-    const char* glsl_version = "#version 130";
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, 0);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
-#endif
-
-    // Create window with graphics context
-    SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-    SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-    SDL_WindowFlags window_flags = (SDL_WindowFlags)(SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
-    window = SDL_CreateWindow("smrfhck", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 1280, 720, window_flags);
-    gl_context = SDL_GL_CreateContext(window);
-    SDL_GL_MakeCurrent(window, gl_context);
-    SDL_GL_SetSwapInterval(1); // Enable vsync
-
-    // Setup Dear ImGui context
-    IMGUI_CHECKVERSION();
-    ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO();
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-    //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-    // Setup Dear ImGui style
-    ImGui::StyleColorsDark();
-    //ImGui::StyleColorsClassic();
-
-    // Setup Platform/Renderer backends
-    ImGui_ImplSDL2_InitForOpenGL(window, gl_context);
-    ImGui_ImplOpenGL3_Init(glsl_version);
-
-    return TRUE;
 }
 
-inline static void render(void)
-{
-    static ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
-    static ImGuiIO& io = ImGui::GetIO();
-    ImGui::Render();
-    glViewport(0, 0, (int)io.DisplaySize.x, (int)io.DisplaySize.y);
-    glClearColor(clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w);
-    glClear(GL_COLOR_BUFFER_BIT);
-    ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-    SDL_GL_SwapWindow(window);
-}
-
-static void finit()
-{
-    ImGui_ImplOpenGL3_Shutdown();
-    ImGui_ImplSDL2_Shutdown();
-    ImGui::DestroyContext();
-
-    SDL_GL_DeleteContext(gl_context);
-    SDL_DestroyWindow(window);
-    SDL_Quit();
-}
+////////////////////////////////////////////////////////////////////////////////
 
 static void game_refresher()
 {
-    std::unique_lock<std::mutex> lck (mtx, std::defer_lock);
-
     while (42) {
-        {
-            // std::unique_lock<std::mutex> lck (mtx, std::defer_lock);
-            lck.lock();
-            refresh();
-            lck.unlock();
-        }
+        refresh();
         std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
+}
+
+inline static void draw_map(GameState *game)
+{
+    // float max_size = (float)MAX(game->level->dwSizeX, game->level->dwSizeY);
+    float max_size = (float)get_level_size(game) / 5.f;
+    // draw_rect(0, 0,
+    //           (float)game->level->dwSizeX / max_size,
+    //           (float)game->level->dwSizeY / max_size,
+    //           &red); //level
+
+    draw_level_connection(game, max_size);
+
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
+        draw_rect(((float)r2->dwPosX - (float)game->level->dwPosX) / max_size,
+                  ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
+                  (float)r2->dwSizeX / max_size,
+                  (float)r2->dwSizeY / max_size,
+                  &black); //room2
+
+
+
+        // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pRoomNext) {
+        //     draw_rect((float)(r1->dwPosX - game->level->dwPosX) / max_size,
+        //               (float)(r1->dwPosY - game->level->dwPosY) / max_size,
+        //               (float)r1->dwSizeX / max_size,
+        //               (float)r1->dwSizeY / max_size,
+        //               &yellow);
+        // }
+    }
+
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
+        //2nd iterate so it's drawn over room2
+        draw_presets(r2, game->level, max_size);
+    }
+
+    draw_rect(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size - 0.02f,
+              ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size - 0.02f,
+              0.04f, 0.04f,
+              &green); //player
+
 }
 
 
@@ -385,23 +614,14 @@ int main(int, char**)
     }
 
     std::thread game_thread(game_refresher);
-    std::unique_lock<std::mutex> lck (mtx, std::defer_lock);
+    game_thread.detach();
 
     if (!init()) {
         EXIT_FAILURE;
     }
 
 // Our state
-    ImColor red(COLOR_RED_1, 0.8f);
-    ImColor green(COLOR_GREEN_1, 0.8f);
-    ImColor blue(COLOR_BLUE_1, 0.8f);
 
-    ImColor yellow(COLOR_YELLOW_1, 0.8f);
-    ImColor cyan(COLOR_CYAN_1, 0.8f);
-    ImColor magenta(COLOR_MAGENTA_1, 0.8f);
-
-    ImColor white(COLOR_WHITE_1, 0.8f);
-    ImColor black(COLOR_BLACK_1, 0.8f);
 
     // Main loop
     bool done = false;
@@ -433,90 +653,18 @@ int main(int, char**)
 
         // main
         ImGui::Begin("smrfhck");
-
-        // if (lck.try_lock()) {
-        {
-            lck.lock();
-            DWORD max_size = MAX(game->level->dwSizeX, game->level->dwSizeY) * 5.f;
-            draw_rect(0, 0,
-                      (float)game->level->dwSizeX * 5.f / (float)max_size,
-                      (float)game->level->dwSizeY * 5.f / (float)max_size,
-                      &red);
-
-            Room2 *r2 = game->level->pRoom2First;
-            while (r2) {
-                draw_rect((float)(r2->dwPosX - game->level->dwPosX) * 5.f / (float)max_size,
-                          (float)(r2->dwPosY - game->level->dwPosY) * 5.f / (float)max_size,
-                          (float)r2->dwSizeX * 5.f / (float)max_size,
-                          (float)r2->dwSizeY * 5.f / (float)max_size,
-                          &blue);
-
-                ImColor *col[2] = {&cyan, &yellow};
-                for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
-                    // LOG_INFO("preset: %d (%d, %d)", pu->dwTxtFileNo, pu->dwPosX, pu->dwPosY);
-                    if (pu->dwType < 3 && !is_interesting_preset(pu->dwTxtFileNo)) {
-                        // LOG_INFO("preset %d", pu->dwTxtFileNo); // DEBUG
-                        // draw_rect(((float)(r2->dwPosX - game->level->dwPosX) * 5.f + (float)pu->dwPosX) / (float)max_size,
-                        //           ((float)(r2->dwPosY - game->level->dwPosY) * 5.f  + (float)pu->dwPosY) / (float)max_size,
-                        //           0.0125,
-                        //           0.0125,
-                        //           &red);
-                        continue;
-                    }
-                    // LOG_INFO("------------------------------"); // DEBUG
-
-                    draw_rect(((float)(r2->dwPosX - game->level->dwPosX) * 5.f + (float)pu->dwPosX) / (float)max_size,
-                              ((float)(r2->dwPosY - game->level->dwPosY) * 5.f  + (float)pu->dwPosY) / (float)max_size,
-                              0.025,
-                              0.025,
-                              pu->dwType < 3 ? col[pu->dwType - 1] : &green);
-                }
-
-                // Room1 *r1 = r2->pRoom1;
-                // while (r1) {
-                //     draw_rect((float)(r1->dwPosX - game->level->dwPosX) * 5.f / (float)max_size,
-                //               (float)(r1->dwPosY - game->level->dwPosY) * 5.f / (float)max_size,
-                //               (float)r1->dwSizeX * 5.f / (float)max_size,
-                //               (float)r1->dwSizeY * 5.f / (float)max_size,
-                //               &yellow);
-
-                //     r1 = r1->pRoomNext;
-                // }
-
-
-                r2 = r2->pRoom2Next;
-            }
-
-
-            draw_rect(((float)game->path.xPos - (float)game->level->dwPosX * 5.f) / (float)max_size,
-                      ((float)game->path.yPos - (float)game->level->dwPosY * 5.f) / (float)max_size,
-                      0.05, 0.05,
-                      &green);
-
-
-            lck.unlock();
+        pthread_mutex_lock(&game->mutex);
+        if (!game->level) {
+            ImGui::Text("Loading...");
+        } else {
+            draw_map(game);
         }
-
-        // LOG_INFO("max %d", max_size);
-
-
-        // ImColor *colors[3] = {&red, &green, &blue};
-        // unsigned int col_idx = 0;
-        // for (float x = 0; x < 1; x += 0.1) {
-        //     for (float y = 0; y < 1; y += 0.1) {
-        //         draw_rect(x, y, 0.1, 0.1, colors[col_idx++ % 3]);
-        //     }
-        // }
-
-        // draw_rect(0.1, 0.1, 1, 1, &red);
-        // draw_rect(0, 0, 0.5, 0.5, &green);
-
+        pthread_mutex_unlock(&game->mutex);
         ImGui::End();
 
         render();
     }
 
-// TODO: kill thread
     finit();
 
     return EXIT_SUCCESS;
