@@ -1,5 +1,9 @@
 #include "smrfhck.hpp"
 
+#define SQRT2  1.41421356f
+#define COS_45 (SQRT2 / 2.f)
+#define SIN_45 COS_45
+
 
 //TODO: add draw_circle
 void draw_rect(float x, float y, float w, float h, ImColor *color)

@@ -13,26 +13,13 @@
 #include <SDL_opengl.h>
 #endif
 
+#include <unistd.h> // sleep
 #include <thread>
 #include <mutex>
 #include <chrono>
 
-#include "smrf.h"
+#include <smrf.h>
 
-#include <unistd.h> // sleep
-
-
-
-// graphics.cpp
-typedef void t_frame_callback(void *data);
-
-BOOL render_loop(t_frame_callback frame_callback, void *data);
-void draw_rect(float x, float y, float w, float h, ImColor *color);
-
-
-#define WINDOW_NAME   "smrfhck"
-#define WINDOW_WIDTH  480
-#define WINDOW_HEIGHT 600
 
 #define COLOR_BLACK_1   0.141f,  0.141f, 0.141f  //fg
 #define COLOR_BLACK_2   0.376f,  0.376f, 0.376f
@@ -53,8 +40,16 @@ void draw_rect(float x, float y, float w, float h, ImColor *color);
 #define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
 
-#define SQRT2  1.41421356f
-#define COS_45 (SQRT2 / 2.f)
-#define SIN_45 COS_45
+
+// graphics.cpp
+#define WINDOW_NAME   "smrfhck"
+#define WINDOW_WIDTH  480
+#define WINDOW_HEIGHT 600
+
+typedef void t_frame_callback(void *data);
+
+BOOL render_loop(t_frame_callback frame_callback, void *data);
+void draw_rect(float x, float y, float w, float h, ImColor *color);
+
 
 #endif

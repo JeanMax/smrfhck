@@ -169,12 +169,13 @@ fclean: clean
 	test -d $(OBJ_DIR) \
 && find $(OBJ_DIR) -type d | sort -r | xargs $(RMDIR) || true
 	$(RM) $(PROJECT) $(PROJECT).san $(PROJECT).dev
+	+$(MAKE) -C $(LSMRF_DIR) fclean
 
 # some people like it real clean
 mrproper:
 	$(RM) -r $(OBJ_DIR)
-	$(RM) -r $(TEST_DIR)
 	+$(MAKE) fclean
+	+$(MAKE) -C $(LSMRF_DIR) mrproper
 
 # clean build and recompile
 re: fclean
