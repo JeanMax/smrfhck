@@ -10,9 +10,9 @@ ImColor magenta(COLOR_MAGENTA_1, 0.8f);
 ImColor white(COLOR_WHITE_1, 0.8f);
 ImColor black(COLOR_BLACK_1, 0.8f);
 
-static DWORD get_level_size(GameState *game)
+static dword get_level_size(GameState *game)
 {
-    DWORD max = 0;
+    dword max = 0;
                 // draw_rect((float)(r2->dwPosX - game->level->dwPosX) * 5.f / (float)max_size,
                 //           (float)(r2->dwPosY - game->level->dwPosY) * 5.f / (float)max_size,
                 //           (float)r2->dwSizeX * 5.f / (float)max_size,
@@ -31,7 +31,7 @@ static void draw_level_connection(GameState *game, float max_size)
 {
     Level *lvl;
     // LOG_INFO("------------------------------------------------------------------");
-    DWORD act = act_from_area(game->level->dwLevelNo);
+    dword act = act_from_area(game->level->dwLevelNo);
     for (int i = 0; i < MAX_AREA; i++) {
         lvl = game->all_levels[i];
         if (!lvl

@@ -65,7 +65,7 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
     // ImGui::GetWindowDrawList()->PushClipRectFullScreen();
 }
 
-static BOOL init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
+static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
 {
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
@@ -141,10 +141,10 @@ static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
     SDL_Quit();
 }
 
-inline static BOOL handle_events(SDL_Window *window)
+inline static bool handle_events(SDL_Window *window)
 {
     static SDL_Event event;
-    BOOL keep_going = TRUE;
+    bool keep_going = TRUE;
 
     while (SDL_PollEvent(&event)) {
         ImGui_ImplSDL2_ProcessEvent(&event);
@@ -181,7 +181,7 @@ inline static void render(SDL_Window *window)
     SDL_GL_SwapWindow(window);
 }
 
-BOOL render_loop(t_frame_callback frame_callback, void *data)
+bool render_loop(t_frame_callback frame_callback, void *data)
 {
     SDL_Window *window;
     SDL_GLContext gl_context;

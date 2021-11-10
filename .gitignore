@@ -1,4 +1,5 @@
 smrfhck
+*.exe
 *.san
 *.dev
 *.o

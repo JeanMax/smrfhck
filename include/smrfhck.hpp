@@ -48,7 +48,7 @@
 
 typedef void t_frame_callback(void *data);
 
-BOOL render_loop(t_frame_callback frame_callback, void *data);
+bool render_loop(t_frame_callback frame_callback, void *data);
 void draw_rect(float x, float y, float w, float h, ImColor *color);
 
 
