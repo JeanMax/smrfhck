@@ -17,6 +17,7 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <map>
 
 #include <smrf.h>
 
@@ -39,6 +40,7 @@
 #define COLOR_WHITE_1   0.741f,  0.741f, 0.702f
 #define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
+extern std::map<const char *, ImColor> g_colors;
 
 
 // graphics.cpp
@@ -46,10 +48,12 @@
 #define WINDOW_WIDTH  480
 #define WINDOW_HEIGHT 600
 
+#define CONFIG_FILE "smrfhck.ini"
+#define CONFIG_COLOR_SECTION "Colors"
+
 typedef void t_frame_callback(void *data);
 
 bool render_loop(t_frame_callback frame_callback, void *data);
 void draw_rect(float x, float y, float w, float h, ImColor *color);
-
 
 #endif

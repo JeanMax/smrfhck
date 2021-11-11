@@ -1,5 +1,12 @@
 #include "smrfhck.hpp"
 
+// to manage config file
+#include <string>
+#include <iostream>
+#include <fstream>
+#include <iterator>
+#include "INIReader.h"
+
 #define SQRT2  1.41421356f
 #define COS_45 (SQRT2 / 2.f)
 #define SIN_45 COS_45
@@ -105,9 +112,9 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
     *window = SDL_CreateWindow(WINDOW_NAME,
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              WINDOW_WIDTH, WINDOW_HEIGHT,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+                               WINDOW_WIDTH, WINDOW_HEIGHT,
+                               SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     *gl_context = SDL_GL_CreateContext(*window);
     SDL_GL_MakeCurrent(*window, *gl_context);
     SDL_GL_SetSwapInterval(1); // Enable vsync
@@ -115,9 +122,32 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO();
+
+    ImGuiIO &io = ImGui::GetIO();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.IniFilename = NULL;
+    std::ifstream ifs(CONFIG_FILE);
+    std::string config_content(std::istreambuf_iterator<char>{ifs}, {});
+    ImGui::LoadIniSettingsFromMemory(config_content.c_str(), config_content.size());
+    ifs.close();
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
+            long col = reader.GetInteger(CONFIG_COLOR_SECTION, it->first, 0);
+            if (col > 0) {
+                LOG_INFO("%s=%ld", it->first, col); // DEBUG
+                g_colors[it->first] = ImColor((ImU32)col);
+            }
+
+            // std::string col = reader.Get(std::string(CONFIG_COLOR_SECTION), s, "nop");
+            // // if (col != "nop") {
+            //     LOG_INFO("%s=%s", it->first, col.c_str()); // DEBUG
+            //     // g_colors[it->first] = ImColor((ImU32)col);
+            // // }
+
+        }
+    }
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -132,6 +162,15 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
 
 static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
 {
+    const char *config_content = ImGui::SaveIniSettingsToMemory(NULL);
+    std::ofstream ofs(CONFIG_FILE);
+    ofs << config_content
+        << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
+    for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
+        ofs << it->first << "=" << it->second << std::endl;
+    }
+    ofs.close();
+
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();

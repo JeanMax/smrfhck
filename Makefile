@@ -31,6 +31,8 @@ SDL_DIR = extern/SDL
 SDL_BUILD_DIR = $(SDL_DIR)/build
 SDL_LIB = $(SDL_BUILD_DIR)/libSDL2.la
 
+# a simple config parser lib
+INI_DIR = extern/inih
 
 # file-names of the sources
 SRC_NAME = main.cpp graphics.cpp \
@@ -41,7 +43,8 @@ SRC_NAME = main.cpp graphics.cpp \
 SRC_PATH = src $(IMGUI_DIR) $(IMGUI_DIR)/backends
 
 # folder-names containing headers files
-INC_PATH = include $(LSMRF_DIR)/include $(IMGUI_DIR) $(IMGUI_DIR)/backends
+INC_PATH = include $(LSMRF_DIR)/include \
+           $(INI_DIR) $(IMGUI_DIR) $(IMGUI_DIR)/backends
 
 # where are your tests?
 TEST_DIR = test
@@ -114,6 +117,8 @@ else ifeq ($(UNAME_S), Linux)
     LDLIBS += -lGL -ldl
     LDLIBS += $(shell sdl2-config --libs)
     CPPFLAGS += $(shell sdl2-config --cflags)
+    CC += -march=native
+    CXX += -march=native
 
 else ifeq ($(UNAME_S), Darwin)  # untested
     LDLIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo

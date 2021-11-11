@@ -1,14 +1,35 @@
 #include "smrfhck.hpp"
 
-ImColor red(COLOR_RED_1, 0.8f);
-ImColor green(COLOR_GREEN_1, 0.8f);
-ImColor green_bis(COLOR_GREEN_2, 0.8f);
-ImColor blue(COLOR_BLUE_1, 0.8f);
-ImColor yellow(COLOR_YELLOW_1, 0.8f);
-ImColor cyan(COLOR_CYAN_1, 0.8f);
-ImColor magenta(COLOR_MAGENTA_1, 0.8f);
-ImColor white(COLOR_WHITE_1, 0.8f);
-ImColor black(COLOR_BLACK_1, 0.8f);
+#define PLAYER_COL_STR                "Player (it's you!)"
+#define NPC_PRESET_COL_STR            "Npc/Monster Preset"
+#define CURRENT_LEVEL_ROOM2_COL_STR   "Current Level's Room2"
+#define OTHER_LEVEL_ROOM2_COL_STR     "Other Level's Room2"
+#define OTHER_LEVEL_COL_STR           "Other Level"
+#define LEVEL_CONNECTION_UP_COL_STR   "Level Connection Up"
+#define LEVEL_CONNECTION_DOWN_COL_STR "Level Connection Down"
+#define WEIRD_CONNECTION_COL_STR      "Weird Connection"
+#define WAYPOINT_COL_STR              "Waypoint"
+#define SHRINE_COL_STR                "Shrine"
+#define QUEST_COL_STR                 "Quest"
+#define UNKNOWN_COL_STR               "Unknown"
+#define BORING_COL_STR                "Not Interesting"
+
+std::map<const char *, ImColor> g_colors {
+    {PLAYER_COL_STR,                ImColor(COLOR_GREEN_1, 0.8f)},
+    {NPC_PRESET_COL_STR,            ImColor(COLOR_RED_1, 0.8f)},
+    {CURRENT_LEVEL_ROOM2_COL_STR,   ImColor(COLOR_BLACK_1, 0.8f)},
+    {OTHER_LEVEL_ROOM2_COL_STR,     ImColor(COLOR_RED_1, 0.8f)},
+    {OTHER_LEVEL_COL_STR,           ImColor(COLOR_RED_1, 0.8f)},
+    {LEVEL_CONNECTION_UP_COL_STR,   ImColor(COLOR_GREEN_2, 0.8f)},
+    {LEVEL_CONNECTION_DOWN_COL_STR, ImColor(COLOR_GREEN_1, 0.8f)},
+    {WEIRD_CONNECTION_COL_STR,      ImColor(COLOR_CYAN_1, 0.8f)},
+    {WAYPOINT_COL_STR,              ImColor(COLOR_MAGENTA_1, 0.8f)},
+    {SHRINE_COL_STR,                ImColor(COLOR_YELLOW_1, 0.8f)},
+    {QUEST_COL_STR,                 ImColor(COLOR_BLUE_1, 0.8f)},
+    {UNKNOWN_COL_STR,               ImColor(COLOR_WHITE_1, 0.8f)},
+    {BORING_COL_STR,                ImColor(COLOR_WHITE_1, 0.0f)},
+};
+
 
 static dword get_level_size(GameState *game)
 {
@@ -48,7 +69,7 @@ static void draw_level_connection(GameState *game, float max_size)
                           ((float)r->dwPosY - (float)game->level->dwPosY) / max_size,
                           (float)r->dwSizeX / max_size,
                           (float)r->dwSizeY / max_size,
-                          &red);
+                          &g_colors[OTHER_LEVEL_ROOM2_COL_STR]);
             }
         } else {
             // LOG_INFO("no room2 in lvl %d", lvl->dwLevelNo);
@@ -56,7 +77,7 @@ static void draw_level_connection(GameState *game, float max_size)
                       ((float)lvl->dwPosY - (float)game->level->dwPosY) / max_size,
                       (float)lvl->dwSizeX / max_size,
                       (float)lvl->dwSizeY / max_size,
-                      &red); //level
+                      &g_colors[OTHER_LEVEL_COL_STR]); //level
         }
 
     }
@@ -71,31 +92,32 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             if (is_uninteresting_unit(pu->dwTxtFileNo)) {
                 continue;
             }
-            color = &red;
+            color = &g_colors[NPC_PRESET_COL_STR];
             // if (pu->dwTxtFileNo < 734) { //super unique boss
             //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
             //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
             // }
         } else if (pu->dwType == 2) {  //object
             if (is_waypoint(pu->dwTxtFileNo)) {
-                color = &magenta;
+                color = &g_colors[WAYPOINT_COL_STR];
             } else if (is_quest(pu->dwTxtFileNo)) {
-                color = &blue;
+                color = &g_colors[QUEST_COL_STR];
             } else if (is_shrine(pu->dwTxtFileNo)) {
-                color = &yellow;
+                color = &g_colors[SHRINE_COL_STR];
             } else if (is_transit(pu->dwTxtFileNo)) {
-                color = &cyan;
+                color = &g_colors[WEIRD_CONNECTION_COL_STR];
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
-                continue;
+                // continue;
+                color = &g_colors[BORING_COL_STR];
             }
         } else if (pu->dwType == 5) {  //tiles
             if (is_backward_tile(pu->dwTxtFileNo)) {
-                color = &green_bis; //probably not what you're search for
+                color = &g_colors[LEVEL_CONNECTION_UP_COL_STR]; //probably not what you're searching for
             } else {
-                color = &green;
+                color = &g_colors[LEVEL_CONNECTION_DOWN_COL_STR];
             }
         } else { // ???
-            color = &white;
+            color = &g_colors[UNKNOWN_COL_STR];
             LOG_INFO("preset: id=%d type=%d (%d, %d)",
                      pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
 
@@ -126,7 +148,7 @@ inline static void draw_map(GameState *game)
                   ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
                   (float)r2->dwSizeX / max_size,
                   (float)r2->dwSizeY / max_size,
-                  &black); //room2
+                  &g_colors[CURRENT_LEVEL_ROOM2_COL_STR]); //room2
 
 
 
@@ -147,8 +169,20 @@ inline static void draw_map(GameState *game)
     draw_rect(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size - 0.02f,
               ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size - 0.02f,
               0.04f, 0.04f,
-              &green); //player
+              &g_colors[PLAYER_COL_STR]); //player
 
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
+inline static void draw_settings(void)
+{
+    for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
+        ImGui::ColorEdit4(it->first, (float*)&it->second, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        ImGui::SameLine();
+        ImGui::Text("%s", it->first);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -156,17 +190,23 @@ inline static void draw_map(GameState *game)
 inline static void frame_callback(void *data)
 {
     GameState *game = (GameState *)data;
+    bool p_open;
 
-    ImGui::Begin("smrfhck");
-    pthread_mutex_lock(&game->mutex);
-
-    if (!game->level) {
-        ImGui::Text("Loading...");
-    } else {
-        draw_map(game);
+    if (ImGui::Begin("smrfhck")) {
+        pthread_mutex_lock(&game->mutex);
+        if (!game->level) {
+            ImGui::Text("Loading...");
+        } else {
+            draw_map(game);
+        }
+        pthread_mutex_unlock(&game->mutex);
     }
+    ImGui::End();
 
-    pthread_mutex_unlock(&game->mutex);
+
+    if (ImGui::Begin("settings", &p_open)) {
+        draw_settings();
+    }
     ImGui::End();
 }
 

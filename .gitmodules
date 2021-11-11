@@ -10,3 +10,6 @@
 [submodule "extern/OpenGL"]
 	path = extern/OpenGL
 	url = https://github.com/McNopper/OpenGL
+[submodule "extern/inih"]
+	path = extern/inih
+	url = https://github.com/jtilly/inih
