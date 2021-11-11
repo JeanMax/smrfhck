@@ -1,47 +1,55 @@
 #include "smrfhck.hpp"
 
-#define PLAYER_COL_STR                "Player (it's you!)"
-#define NPC_PRESET_COL_STR            "Npc/Monster Preset"
-#define CURRENT_LEVEL_ROOM2_COL_STR   "Current Level's Room2"
-#define OTHER_LEVEL_ROOM2_COL_STR     "Other Level's Room2"
-#define OTHER_LEVEL_COL_STR           "Other Level"
-#define LEVEL_CONNECTION_UP_COL_STR   "Level Connection Up"
-#define LEVEL_CONNECTION_DOWN_COL_STR "Level Connection Down"
-#define WEIRD_CONNECTION_COL_STR      "Weird Connection"
-#define WAYPOINT_COL_STR              "Waypoint"
-#define SHRINE_COL_STR                "Shrine"
-#define QUEST_COL_STR                 "Quest"
-#define UNKNOWN_COL_STR               "Unknown"
-#define BORING_COL_STR                "Not Interesting"
+#define CURRENT_LEVEL_ROOM2_SETTING_STR   "Current Level's Room2"
+#define OTHER_LEVEL_ROOM2_SETTING_STR     "Other Level's Room2"
+#define OTHER_LEVEL_SETTING_STR           "Other Level"
+#define PLAYER_SETTING_STR                "Player (it's you!)"
+#define NPC_PRESET_SETTING_STR            "Npc/Monster Preset"
+#define LEVEL_CONNECTION_UP_SETTING_STR   "Level Connection Up"
+#define LEVEL_CONNECTION_DOWN_SETTING_STR "Level Connection Down"
+#define WEIRD_CONNECTION_SETTING_STR      "Weird Connection"
+#define WAYPOINT_SETTING_STR              "Waypoint"
+#define SHRINE_SETTING_STR                "Shrine"
+#define QUEST_SETTING_STR                 "Quest"
+#define UNKNOWN_SETTING_STR               "Unknown"
+#define BORING_SETTING_STR                "Not Interesting"
 
-std::map<const char *, ImColor> g_colors {
-    {PLAYER_COL_STR,                ImColor(COLOR_GREEN_1, 0.8f)},
-    {NPC_PRESET_COL_STR,            ImColor(COLOR_RED_1, 0.8f)},
-    {CURRENT_LEVEL_ROOM2_COL_STR,   ImColor(COLOR_BLACK_1, 0.8f)},
-    {OTHER_LEVEL_ROOM2_COL_STR,     ImColor(COLOR_RED_1, 0.8f)},
-    {OTHER_LEVEL_COL_STR,           ImColor(COLOR_RED_1, 0.8f)},
-    {LEVEL_CONNECTION_UP_COL_STR,   ImColor(COLOR_GREEN_2, 0.8f)},
-    {LEVEL_CONNECTION_DOWN_COL_STR, ImColor(COLOR_GREEN_1, 0.8f)},
-    {WEIRD_CONNECTION_COL_STR,      ImColor(COLOR_CYAN_1, 0.8f)},
-    {WAYPOINT_COL_STR,              ImColor(COLOR_MAGENTA_1, 0.8f)},
-    {SHRINE_COL_STR,                ImColor(COLOR_YELLOW_1, 0.8f)},
-    {QUEST_COL_STR,                 ImColor(COLOR_BLUE_1, 0.8f)},
-    {UNKNOWN_COL_STR,               ImColor(COLOR_WHITE_1, 0.8f)},
-    {BORING_COL_STR,                ImColor(COLOR_WHITE_1, 0.0f)},
+std::map<const char *, Setting> g_settings {
+    {CURRENT_LEVEL_ROOM2_SETTING_STR, {
+            .color=ImColor(COLOR_BLACK_1, 0.8f), .size=0.f, .is_circle=0}},
+    {OTHER_LEVEL_ROOM2_SETTING_STR, {
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
+    {OTHER_LEVEL_SETTING_STR, {
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
+    {PLAYER_SETTING_STR, {
+            .color=ImColor(COLOR_GREEN_1, 0.8f), .size=0.04f, .is_circle=0}},
+    {NPC_PRESET_SETTING_STR, {
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {LEVEL_CONNECTION_UP_SETTING_STR, {
+            .color=ImColor(COLOR_GREEN_2, 0.8f), .size=0.025f, .is_circle=0}},
+    {LEVEL_CONNECTION_DOWN_SETTING_STR, {
+            .color=ImColor(COLOR_GREEN_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {WEIRD_CONNECTION_SETTING_STR, {
+            .color=ImColor(COLOR_CYAN_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {WAYPOINT_SETTING_STR, {
+            .color=ImColor(COLOR_MAGENTA_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {SHRINE_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {QUEST_SETTING_STR, {
+            .color=ImColor(COLOR_BLUE_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {UNKNOWN_SETTING_STR, {
+            .color=ImColor(COLOR_WHITE_1, 0.8f), .size=0.025f, .is_circle=0}},
+    {BORING_SETTING_STR, {
+            .color=ImColor(COLOR_WHITE_1, 0.0f), .size=0.025f, .is_circle=0}},
 };
 
 
 static dword get_level_size(GameState *game)
 {
     dword max = 0;
-                // draw_rect((float)(r2->dwPosX - game->level->dwPosX) * 5.f / (float)max_size,
-                //           (float)(r2->dwPosY - game->level->dwPosY) * 5.f / (float)max_size,
-                //           (float)r2->dwSizeX * 5.f / (float)max_size,
-                //           (float)r2->dwSizeY * 5.f / (float)max_size,
-
     Room2 *r2 = game->level->pRoom2First;
     while (r2) {
-        max = MAX(max, (r2->dwPosX - game->level->dwPosX + r2->dwSizeX) * 5 );
+        max = MAX(max, (r2->dwPosX - game->level->dwPosX + r2->dwSizeX) * 5);
         max = MAX(max, (r2->dwPosY - game->level->dwPosY + r2->dwSizeY) * 5);
         r2 = r2->pRoom2Next;
     }
@@ -51,15 +59,12 @@ static dword get_level_size(GameState *game)
 static void draw_level_connection(GameState *game, float max_size)
 {
     Level *lvl;
-    // LOG_INFO("------------------------------------------------------------------");
     dword act = act_from_area(game->level->dwLevelNo);
     for (int i = 0; i < MAX_AREA; i++) {
         lvl = game->all_levels[i];
         if (!lvl
             || lvl->dwLevelNo == game->level->dwLevelNo
-            || act_from_area(lvl->dwLevelNo) != act
-            // || ABS((float)lvl->dwLevelNo - (float)game->level->dwLevelNo) > 2
-            ) {
+            || act_from_area(lvl->dwLevelNo) != act) {
             continue;
         }
 
@@ -69,7 +74,7 @@ static void draw_level_connection(GameState *game, float max_size)
                           ((float)r->dwPosY - (float)game->level->dwPosY) / max_size,
                           (float)r->dwSizeX / max_size,
                           (float)r->dwSizeY / max_size,
-                          &g_colors[OTHER_LEVEL_ROOM2_COL_STR]);
+                          &g_settings[OTHER_LEVEL_ROOM2_SETTING_STR].color);
             }
         } else {
             // LOG_INFO("no room2 in lvl %d", lvl->dwLevelNo);
@@ -77,7 +82,7 @@ static void draw_level_connection(GameState *game, float max_size)
                       ((float)lvl->dwPosY - (float)game->level->dwPosY) / max_size,
                       (float)lvl->dwSizeX / max_size,
                       (float)lvl->dwSizeY / max_size,
-                      &g_colors[OTHER_LEVEL_COL_STR]); //level
+                      &g_settings[OTHER_LEVEL_SETTING_STR].color); //level
         }
 
     }
@@ -86,46 +91,56 @@ static void draw_level_connection(GameState *game, float max_size)
 static void draw_presets(Room2 *r2, Level *level, float max_size)
 {
     ImColor *color = NULL;
+    float size = 0.f;
 
     for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
         if (pu->dwType == 1) { //monster/npc
             if (is_uninteresting_unit(pu->dwTxtFileNo)) {
                 continue;
             }
-            color = &g_colors[NPC_PRESET_COL_STR];
+            color = &g_settings[NPC_PRESET_SETTING_STR].color;
+            size = g_settings[NPC_PRESET_SETTING_STR].size;
             // if (pu->dwTxtFileNo < 734) { //super unique boss
             //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
             //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
             // }
         } else if (pu->dwType == 2) {  //object
             if (is_waypoint(pu->dwTxtFileNo)) {
-                color = &g_colors[WAYPOINT_COL_STR];
+                color = &g_settings[WAYPOINT_SETTING_STR].color;
+                size = g_settings[WAYPOINT_SETTING_STR].size;
             } else if (is_quest(pu->dwTxtFileNo)) {
-                color = &g_colors[QUEST_COL_STR];
+                color = &g_settings[QUEST_SETTING_STR].color;
+                size = g_settings[QUEST_SETTING_STR].size;
             } else if (is_shrine(pu->dwTxtFileNo)) {
-                color = &g_colors[SHRINE_COL_STR];
+                color = &g_settings[SHRINE_SETTING_STR].color;
+                size = g_settings[SHRINE_SETTING_STR].size;
             } else if (is_transit(pu->dwTxtFileNo)) {
-                color = &g_colors[WEIRD_CONNECTION_COL_STR];
+                color = &g_settings[WEIRD_CONNECTION_SETTING_STR].color;
+                size = g_settings[WEIRD_CONNECTION_SETTING_STR].size;
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
                 // continue;
-                color = &g_colors[BORING_COL_STR];
+                color = &g_settings[BORING_SETTING_STR].color;
+                size = g_settings[BORING_SETTING_STR].size;
             }
         } else if (pu->dwType == 5) {  //tiles
             if (is_backward_tile(pu->dwTxtFileNo)) {
-                color = &g_colors[LEVEL_CONNECTION_UP_COL_STR]; //probably not what you're searching for
+                color = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR].color; //probably not what you're searching for
+                size = g_settings[LEVEL_CONNECTION_UP_SETTING_STR].color; //probably not what you're searching size
             } else {
-                color = &g_colors[LEVEL_CONNECTION_DOWN_COL_STR];
+                color = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].color;
+                size = g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].size;
             }
         } else { // ???
-            color = &g_colors[UNKNOWN_COL_STR];
+            color = &g_settings[UNKNOWN_SETTING_STR].color;
+            size = g_settings[UNKNOWN_SETTING_STR].size;
             LOG_INFO("preset: id=%d type=%d (%d, %d)",
                      pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
 
         }
-        draw_rect(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size - 0.0125f,
-                  ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size - 0.0125f,
-                  0.025f,
-                  0.025f,
+        draw_rect(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size - size / 2,
+                  ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size - size / 2,
+                  size,
+                  size,
                   color);
 
     }
@@ -148,7 +163,7 @@ inline static void draw_map(GameState *game)
                   ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
                   (float)r2->dwSizeX / max_size,
                   (float)r2->dwSizeY / max_size,
-                  &g_colors[CURRENT_LEVEL_ROOM2_COL_STR]); //room2
+                  &g_settings[CURRENT_LEVEL_ROOM2_SETTING_STR].color); //room2
 
 
 
@@ -166,22 +181,76 @@ inline static void draw_map(GameState *game)
         draw_presets(r2, game->level, max_size);
     }
 
-    draw_rect(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size - 0.02f,
-              ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size - 0.02f,
-              0.04f, 0.04f,
-              &g_colors[PLAYER_COL_STR]); //player
+    float player_size = g_settings[PLAYER_SETTING_STR].size;
+
+    draw_rect(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size - player_size / 2,
+              ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size - player_size / 2,
+              player_size,
+              player_size,
+              &g_settings[PLAYER_SETTING_STR].color); //player
 
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
+inline static void draw_debug(GameState *game)
+{
+   for (PresetUnit *pu = game->level->pRoom2First->pPreset; pu; pu = pu->pPresetNext) {
+        if (pu->dwType == 1) { //monster/npc
+            if (is_uninteresting_unit(pu->dwTxtFileNo)) {
+                continue;
+            }
+            // color = &red;
+        } else if (pu->dwType == 2) {  //object
+            if (is_waypoint(pu->dwTxtFileNo)) {
+                // color = &magenta;
+            } else if (is_quest(pu->dwTxtFileNo)) {
+                // color = &blue;
+            } else if (is_shrine(pu->dwTxtFileNo)) {
+                // color = &yellow;
+            } else if (is_transit(pu->dwTxtFileNo)) {
+                // color = &cyan;
+            } else { //!is_interesting_preset(pu->dwTxtFileNo)
+                continue;
+            }
+        } else if (pu->dwType == 5) {  //tiles
+            if (is_backward_tile(pu->dwTxtFileNo)) {
+                // color = &green_bis; //probably not what you're searching for
+            } else {
+                // color = &green;
+            }
+        } else { // ???
+            // color = &white;
+        }
+        // ;
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 inline static void draw_settings(void)
 {
-    for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
-        ImGui::ColorEdit4(it->first, (float*)&it->second, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+    // static bool check = true;
+    int i = 0;
+
+    // ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ImGui::ColorEdit4(it->first,
+                          (float *)&it->second.color,
+                          ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
         ImGui::Text("%s", it->first);
+        if (strcmp(it->first, CURRENT_LEVEL_ROOM2_SETTING_STR)
+                && strcmp(it->first, OTHER_LEVEL_ROOM2_SETTING_STR)
+                && strcmp(it->first, OTHER_LEVEL_SETTING_STR)) {
+            ImGui::SameLine(200);
+            ImGui::PushItemWidth(90);
+            ImGui::PushID(i++);
+            ImGui::InputFloat("", &it->second.size, 0.001f, 0.1f, "%.3f");
+            ImGui::PopID();
+
+            // ImGui::Checkbox("checkbox", &check);
+        }
     }
 }
 
@@ -190,7 +259,7 @@ inline static void draw_settings(void)
 inline static void frame_callback(void *data)
 {
     GameState *game = (GameState *)data;
-    bool p_open;
+    static bool p_open = true;
 
     if (ImGui::Begin("smrfhck")) {
         pthread_mutex_lock(&game->mutex);
@@ -203,11 +272,28 @@ inline static void frame_callback(void *data)
     }
     ImGui::End();
 
+    if (p_open) {
+        // if (ImGui::Begin("debug", &p_open, 0)) {
+        //     pthread_mutex_lock(&game->mutex);
+        //     if (!game->level) {
+        //         ImGui::Text("Loading...");
+        //     } else {
+        //         draw_debug(game);
+        //     }
+        //     pthread_mutex_unlock(&game->mutex);
+        // }
+        // ImGui::End();
 
-    if (ImGui::Begin("settings", &p_open)) {
-        draw_settings();
+        if (ImGui::Begin("settings", &p_open, 0)) {
+            draw_settings();
+        }
+        ImGui::End();
     }
-    ImGui::End();
+
+    static bool show_demo_window = true;   // DEBUG
+    if (show_demo_window) {
+        ImGui::ShowDemoWindow(&show_demo_window);
+    }
 }
 
 static void game_refresher(void *data)

@@ -22,17 +22,12 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
     vMax.x += ImGui::GetWindowPos().x;
     vMax.y += ImGui::GetWindowPos().y;
 
-    // printf("win: (%f, %f) (%f, %f)\n", vMin.x, vMin.y, vMax.x, vMax.y);
-
     // assume 0 >= x,y,w,h >= 1, 1 == full width/height
     float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
     x *= max_size;
     y *= max_size;
     w *= max_size;
     h *= max_size;
-
-    // printf("max_size: %f\n", max_size);
-
 
     ImVec2 rect_a(x, y);
     ImVec2 rect_b(x + w, y);
@@ -52,24 +47,16 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
 
     //compensate rotate
     ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
-    rect_a.x += win_center.x;//, rect_a.y += vMin.y;
-    rect_b.x += win_center.x;//, rect_b.y += vMin.y;
-    rect_c.x += win_center.x;//, rect_c.y += vMin.y;
-    rect_d.x += win_center.x;//, rect_d.y += vMin.y;
+    rect_a.x += win_center.x;
+    rect_b.x += win_center.x;
+    rect_c.x += win_center.x;
+    rect_d.x += win_center.x;
 
-    // printf("rect: (%f, %f) (%f, %f)\n",
-    //        rect_a.x, rect_b.y,
-    //     );
-
-
-    ImGui::GetWindowDrawList()->AddQuadFilled(
-        rect_a,
-        rect_b,
-        rect_c,
-        rect_d,
-        // ImGui::ColorConvertFloat4ToU32(ImVec4(1, .15, .15, 1)) );
-        *color);
-    // ImGui::GetWindowDrawList()->PushClipRectFullScreen();
+    ImGui::GetWindowDrawList()->AddQuadFilled(rect_a,
+                                              rect_b,
+                                              rect_c,
+                                              rect_d,
+                                              *color);
 }
 
 static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
@@ -133,19 +120,19 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     ifs.close();
     INIReader reader(CONFIG_FILE);
     if (!reader.ParseError()) {
-        for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
-            long col = reader.GetInteger(CONFIG_COLOR_SECTION, it->first, 0);
-            if (col > 0) {
-                LOG_INFO("%s=%ld", it->first, col); // DEBUG
-                g_colors[it->first] = ImColor((ImU32)col);
+        for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+            long color = reader.GetInteger(CONFIG_COLOR_SECTION, it->first, -1);
+            if (color >= 0) {
+                g_settings[it->first].color = ImColor((ImU32)color);
             }
-
-            // std::string col = reader.Get(std::string(CONFIG_COLOR_SECTION), s, "nop");
-            // // if (col != "nop") {
-            //     LOG_INFO("%s=%s", it->first, col.c_str()); // DEBUG
-            //     // g_colors[it->first] = ImColor((ImU32)col);
-            // // }
-
+            float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
+            if (size >= 0) {
+                g_settings[it->first].size = size;
+            }
+            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, it->first, -1);
+            if (is_circle >= 0) {
+                g_settings[it->first].is_circle = is_circle;
+            }
         }
     }
 
@@ -166,8 +153,18 @@ static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
     std::ofstream ofs(CONFIG_FILE);
     ofs << config_content
         << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
-    for (auto it = g_colors.begin(); it != g_colors.end(); ++it) {
-        ofs << it->first << "=" << it->second << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.color << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SIZE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.size << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SHAPE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.is_circle << std::endl;
     }
     ofs.close();
 

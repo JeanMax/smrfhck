@@ -40,7 +40,14 @@
 #define COLOR_WHITE_1   0.741f,  0.741f, 0.702f
 #define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
-extern std::map<const char *, ImColor> g_colors;
+typedef struct setting Setting;
+struct setting {
+    ImColor color;
+    float size;
+    bool is_circle;
+};
+
+extern std::map<const char *, Setting> g_settings;
 
 
 // graphics.cpp
@@ -50,6 +57,8 @@ extern std::map<const char *, ImColor> g_colors;
 
 #define CONFIG_FILE "smrfhck.ini"
 #define CONFIG_COLOR_SECTION "Colors"
+#define CONFIG_SIZE_SECTION "Size"
+#define CONFIG_SHAPE_SECTION "Shape"
 
 typedef void t_frame_callback(void *data);
 
