@@ -21,7 +21,7 @@ PROJECT = smrfhck
 
 # your favorite lib ever
 LSMRF_DIR = extern/libsmrf
-LSMRF_LIB = $(LSMRF_DIR)/libsmrf.a
+LSMRF_LIB = $(LSMRF_DIR)/libsmrf$(OS).a
 
 # another cool lib
 IMGUI_DIR = extern/imgui
@@ -53,7 +53,7 @@ TEST_DIR = test
 LDLIBS = $(LSMRF_LIB)
 
 # linking flags
-LDFLAGS =
+LDFLAGS = -s
 
 # compilation flags
 CPPFLAGS =
@@ -137,26 +137,26 @@ endif
 # release build
 all:
 	+$(MAKE) -C $(LSMRF_DIR)
-	+$(MAKE) $(PROJECT) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel"
+	+$(MAKE) $(PROJECT) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
 
 # masochist build
 mecry:
 	+$(MAKE) -C $(LSMRF_DIR) mecry
-	+$(MAKE) $(PROJECT) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel"
+	+$(MAKE) $(PROJECT) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
 
 # build for gdb/valgrind debugging
 dev:
 	+$(MAKE) -C $(LSMRF_DIR) dev
 	+$(MAKE) $(PROJECT)_dev \
 		"PROJECT = $(PROJECT)_dev" "LSMRF_LIB = $(LSMRF_LIB:.a=_dev.a)" \
-		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev"
+		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev$(OS)"
 
 # build for runtime debugging (fsanitize)
 san:
 	+$(MAKE) -C $(LSMRF_DIR) san
 	+$(MAKE) $(PROJECT)_san \
 		"PROJECT = $(PROJECT)_san" "LSMRF_LIB = $(LSMRF_LIB:.a=_san.a)" \
-		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san"
+		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san$(OS)"
 
 # remove all generated .o and .d
 clean:
