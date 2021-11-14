@@ -65,7 +65,7 @@ CPPFLAGS =
 ##
 
 # compilation/linking flags for the differents public rules
-WFLAGS = -std=c++11 -Wextra -Wall -Winline  # warnings
+WFLAGS = -std=c++11 -Wextra -Wall  # warnings
 RCFLAGS = $(WFLAGS) -O2  # release
 DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG  # debug
 SCFLAGS = $(DCFLAGS) -fsanitize=address,undefined  # sanitize
@@ -147,15 +147,15 @@ mecry:
 # build for gdb/valgrind debugging
 dev:
 	+$(MAKE) -C $(LSMRF_DIR) dev
-	+$(MAKE) $(PROJECT).dev \
-		"PROJECT = $(PROJECT).dev" "LSMRF_LIB = $(LSMRF_LIB).dev" \
+	+$(MAKE) $(PROJECT)_dev \
+		"PROJECT = $(PROJECT)_dev" "LSMRF_LIB = $(LSMRF_LIB:.a=_dev.a)" \
 		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev"
 
 # build for runtime debugging (fsanitize)
 san:
 	+$(MAKE) -C $(LSMRF_DIR) san
-	+$(MAKE) $(PROJECT).san \
-		"PROJECT = $(PROJECT).san" "LSMRF_LIB = $(LSMRF_LIB).san" \
+	+$(MAKE) $(PROJECT)_san \
+		"PROJECT = $(PROJECT)_san" "LSMRF_LIB = $(LSMRF_LIB:.a=_san.a)" \
 		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san"
 
 # remove all generated .o and .d

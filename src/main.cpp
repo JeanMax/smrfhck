@@ -125,7 +125,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
         } else if (pu->dwType == 5) {  //tiles
             if (is_backward_tile(pu->dwTxtFileNo)) {
                 color = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR].color; //probably not what you're searching for
-                size = g_settings[LEVEL_CONNECTION_UP_SETTING_STR].color; //probably not what you're searching size
+                size = g_settings[LEVEL_CONNECTION_UP_SETTING_STR].size;
             } else {
                 color = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].color;
                 size = g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].size;
@@ -290,10 +290,10 @@ inline static void frame_callback(void *data)
         ImGui::End();
     }
 
-    static bool show_demo_window = true;   // DEBUG
-    if (show_demo_window) {
-        ImGui::ShowDemoWindow(&show_demo_window);
-    }
+    // static bool show_demo_window = true;   // DEBUG
+    // if (show_demo_window) {
+    //     ImGui::ShowDemoWindow(&show_demo_window);
+    // }
 }
 
 static void game_refresher(void *data)

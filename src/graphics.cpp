@@ -121,9 +121,10 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     INIReader reader(CONFIG_FILE);
     if (!reader.ParseError()) {
         for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-            long color = reader.GetInteger(CONFIG_COLOR_SECTION, it->first, -1);
-            if (color >= 0) {
-                g_settings[it->first].color = ImColor((ImU32)color);
+            std::string color = reader.Get(CONFIG_COLOR_SECTION, it->first, "");
+            if (color.size()) {
+                //Get+stoll instead of GetInt to avoid overflow
+                g_settings[it->first].color = ImColor((ImU32)std::stoll(color));
             }
             float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
             if (size >= 0) {
