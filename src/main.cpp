@@ -22,9 +22,9 @@ std::map<const char *, Setting> g_settings {
     {OTHER_LEVEL_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
     {PLAYER_SETTING_STR, {
-            .color=ImColor(COLOR_GREEN_1, 0.8f), .size=0.04f, .is_circle=0}},
+            .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.020f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
-            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.025f, .is_circle=0}},
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.015f, .is_circle=1}},
     {LEVEL_CONNECTION_UP_SETTING_STR, {
             .color=ImColor(COLOR_GREEN_2, 0.8f), .size=0.025f, .is_circle=0}},
     {LEVEL_CONNECTION_DOWN_SETTING_STR, {
@@ -40,7 +40,7 @@ std::map<const char *, Setting> g_settings {
     {UNKNOWN_SETTING_STR, {
             .color=ImColor(COLOR_WHITE_1, 0.8f), .size=0.025f, .is_circle=0}},
     {BORING_SETTING_STR, {
-            .color=ImColor(COLOR_WHITE_1, 0.0f), .size=0.025f, .is_circle=0}},
+            .color=ImColor(COLOR_WHITE_1, 0.1f), .size=0.025f, .is_circle=0}},
 };
 
 
@@ -90,59 +90,46 @@ static void draw_level_connection(GameState *game, float max_size)
 
 static void draw_presets(Room2 *r2, Level *level, float max_size)
 {
-    ImColor *color = NULL;
-    float size = 0.f;
+    Setting *setting;
 
     for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
         if (pu->dwType == 1) { //monster/npc
             if (is_uninteresting_unit(pu->dwTxtFileNo)) {
                 continue;
             }
-            color = &g_settings[NPC_PRESET_SETTING_STR].color;
-            size = g_settings[NPC_PRESET_SETTING_STR].size;
+            setting = &g_settings[NPC_PRESET_SETTING_STR];
             // if (pu->dwTxtFileNo < 734) { //super unique boss
             //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
             //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
             // }
         } else if (pu->dwType == 2) {  //object
             if (is_waypoint(pu->dwTxtFileNo)) {
-                color = &g_settings[WAYPOINT_SETTING_STR].color;
-                size = g_settings[WAYPOINT_SETTING_STR].size;
+                setting = &g_settings[WAYPOINT_SETTING_STR];
             } else if (is_quest(pu->dwTxtFileNo)) {
-                color = &g_settings[QUEST_SETTING_STR].color;
-                size = g_settings[QUEST_SETTING_STR].size;
+                setting = &g_settings[QUEST_SETTING_STR];
             } else if (is_shrine(pu->dwTxtFileNo)) {
-                color = &g_settings[SHRINE_SETTING_STR].color;
-                size = g_settings[SHRINE_SETTING_STR].size;
+                setting = &g_settings[SHRINE_SETTING_STR];
             } else if (is_transit(pu->dwTxtFileNo)) {
-                color = &g_settings[WEIRD_CONNECTION_SETTING_STR].color;
-                size = g_settings[WEIRD_CONNECTION_SETTING_STR].size;
+                setting = &g_settings[WEIRD_CONNECTION_SETTING_STR];
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
                 // continue;
-                color = &g_settings[BORING_SETTING_STR].color;
-                size = g_settings[BORING_SETTING_STR].size;
+                setting = &g_settings[BORING_SETTING_STR];
             }
         } else if (pu->dwType == 5) {  //tiles
-            if (is_backward_tile(pu->dwTxtFileNo)) {
-                color = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR].color; //probably not what you're searching for
-                size = g_settings[LEVEL_CONNECTION_UP_SETTING_STR].size;
+            if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
+                setting = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR];
             } else {
-                color = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].color;
-                size = g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR].size;
+                setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
             }
         } else { // ???
-            color = &g_settings[UNKNOWN_SETTING_STR].color;
-            size = g_settings[UNKNOWN_SETTING_STR].size;
+            setting = &g_settings[UNKNOWN_SETTING_STR];
             LOG_INFO("preset: id=%d type=%d (%d, %d)",
                      pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
 
         }
-        draw_rect(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size - size / 2,
-                  ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size - size / 2,
-                  size,
-                  size,
-                  color);
-
+        draw(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size,
+             ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size,
+             setting);
     }
 
 }
@@ -165,8 +152,6 @@ inline static void draw_map(GameState *game)
                   (float)r2->dwSizeY / max_size,
                   &g_settings[CURRENT_LEVEL_ROOM2_SETTING_STR].color); //room2
 
-
-
         // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pRoomNext) {
         //     draw_rect((float)(r1->dwPosX - game->level->dwPosX) / max_size,
         //               (float)(r1->dwPosY - game->level->dwPosY) / max_size,
@@ -181,18 +166,14 @@ inline static void draw_map(GameState *game)
         draw_presets(r2, game->level, max_size);
     }
 
-    float player_size = g_settings[PLAYER_SETTING_STR].size;
-
-    draw_rect(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size - player_size / 2,
-              ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size - player_size / 2,
-              player_size,
-              player_size,
-              &g_settings[PLAYER_SETTING_STR].color); //player
-
+    draw(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
+         ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
+         &g_settings[PLAYER_SETTING_STR]); //player
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 
+/*
 inline static void draw_debug(GameState *game)
 {
    for (PresetUnit *pu = game->level->pRoom2First->pPreset; pu; pu = pu->pPresetNext) {
@@ -225,6 +206,7 @@ inline static void draw_debug(GameState *game)
         // ;
     }
 }
+*/
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -232,6 +214,15 @@ inline static void draw_settings(void)
 {
     // static bool check = true;
     int i = 0;
+
+    ImGui::SameLine(10);
+    ImGui::Text("Color");
+    ImGui::SameLine(100);
+    ImGui::Text("What");
+    ImGui::SameLine(230);
+    ImGui::Text("Size");
+    ImGui::SameLine(280);
+    ImGui::Text("Circle?");
 
     // ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
     for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
@@ -249,7 +240,10 @@ inline static void draw_settings(void)
             ImGui::InputFloat("", &it->second.size, 0.001f, 0.1f, "%.3f");
             ImGui::PopID();
 
-            // ImGui::Checkbox("checkbox", &check);
+            ImGui::SameLine();
+            ImGui::PushID(i++);
+            ImGui::Checkbox("", &it->second.is_circle);
+            ImGui::PopID();
         }
     }
 }
@@ -261,6 +255,10 @@ inline static void frame_callback(void *data)
     GameState *game = (GameState *)data;
     static bool p_open = true;
 
+    ImGui::SetNextWindowPos(ImVec2(10, 25),
+                            ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 20, WINDOW_HEIGHT - 35),
+                             ImGuiCond_FirstUseEver);
     if (ImGui::Begin("smrfhck")) {
         pthread_mutex_lock(&game->mutex);
         if (!game->level) {
@@ -284,6 +282,9 @@ inline static void frame_callback(void *data)
         // }
         // ImGui::End();
 
+        ImGui::SetNextWindowPos(ImVec2(10, 3),
+                                ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowCollapsed(TRUE, ImGuiCond_FirstUseEver);
         if (ImGui::Begin("settings", &p_open, 0)) {
             draw_settings();
         }

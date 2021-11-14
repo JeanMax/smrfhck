@@ -12,10 +12,38 @@
 #define COS_45 (SQRT2 / 2.f)
 #define SIN_45 COS_45
 
+void draw_circle(float x, float y, float radius, ImColor *color)
+{
+    //TODO: optimize
+    ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+    ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+    vMin.x += ImGui::GetWindowPos().x;
+    vMin.y += ImGui::GetWindowPos().y;
+    vMax.x += ImGui::GetWindowPos().x;
+    vMax.y += ImGui::GetWindowPos().y;
 
-//TODO: add draw_circle
+    // assume 0 >= x,y,radius >= 1, 1 == full width/height
+    float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
+    x *= max_size;
+    y *= max_size;
+    radius *= max_size;
+
+    ImVec2 center(x, y);
+    center = ImRotate(center, COS_45, SIN_45);
+
+    //window offset
+    center.x += vMin.x, center.y += vMin.y;
+
+    //compensate rotate
+    ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
+    center.x += win_center.x;
+
+    ImGui::GetWindowDrawList()->AddCircleFilled(center, radius, *color, 0);
+}
+
 void draw_rect(float x, float y, float w, float h, ImColor *color)
 {
+    //TODO: optimize
     ImVec2 vMin = ImGui::GetWindowContentRegionMin();
     ImVec2 vMax = ImGui::GetWindowContentRegionMax();
     vMin.x += ImGui::GetWindowPos().x;
@@ -59,6 +87,19 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
                                               rect_d,
                                               *color);
 }
+
+void draw(float x, float y, Setting *s)
+{
+    if (s->is_circle) {
+        draw_circle(x, y, s->size, &s->color);
+    } else { //square
+        draw_rect(x - s->size / 2, y - s->size / 2, s->size, s->size, &s->color);
+    }
+}
+
+
+
+////////////////////////////////////////////////////////////////////////////////
 
 static void set_icon(SDL_Window* window)
 {

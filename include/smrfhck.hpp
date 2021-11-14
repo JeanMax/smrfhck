@@ -63,6 +63,8 @@ extern std::map<const char *, Setting> g_settings;
 typedef void t_frame_callback(void *data);
 
 bool render_loop(t_frame_callback frame_callback, void *data);
+void draw_circle(float x, float y, float radius, ImColor *color);
 void draw_rect(float x, float y, float w, float h, ImColor *color);
+void draw(float x, float y, Setting *s);
 
 #endif
