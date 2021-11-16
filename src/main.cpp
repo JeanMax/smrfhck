@@ -172,41 +172,68 @@ inline static void draw_map(GameState *game)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+inline static float distance(float x1, float y1, float x2, float y2)
+{
+    return hypotf(x1 - x2, y1 - y2);
+}
 
-/*
 inline static void draw_debug(GameState *game)
 {
-   for (PresetUnit *pu = game->level->pRoom2First->pPreset; pu; pu = pu->pPresetNext) {
-        if (pu->dwType == 1) { //monster/npc
-            if (is_uninteresting_unit(pu->dwTxtFileNo)) {
+    std::map<qword, PresetUnit *> preset_map;
+
+    ImVec2 player((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX,
+                  (float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY);
+
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
+        for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
+            ImVec2 preset((float)r2->dwPosX - (float)game->level->dwPosX + (float)pu->dwPosX / 5.f,
+                          (float)r2->dwPosY - (float)game->level->dwPosY + (float)pu->dwPosY / 5.f);
+            float pu_dist = distance(player.x, player.y, preset.x, preset.y);
+            if (pu_dist > 5) {
                 continue;
             }
-            // color = &red;
+            preset_map[((qword)pu->dwType << 32) + pu->dwTxtFileNo] = pu;
+        }
+    }
+
+    ImGui::Text("Type Id");
+    ImGui::SameLine(80);
+    ImGui::Text("Category");
+    for (auto it = preset_map.begin(); it != preset_map.end(); ++it) {
+        PresetUnit *pu = it->second;
+
+        ImGui::Text("%d    %d", pu->dwType, pu->dwTxtFileNo);
+        ImGui::SameLine(80);
+
+        if (pu->dwType == 1) { //monster/npc
+            // if (is_uninteresting_unit(pu->dwTxtFileNo)) {
+            //     continue;
+            // }
+            ImGui::Text(NPC_PRESET_SETTING_STR);
         } else if (pu->dwType == 2) {  //object
             if (is_waypoint(pu->dwTxtFileNo)) {
-                // color = &magenta;
+                ImGui::Text(WAYPOINT_SETTING_STR);
             } else if (is_quest(pu->dwTxtFileNo)) {
-                // color = &blue;
+                ImGui::Text(QUEST_SETTING_STR);
             } else if (is_shrine(pu->dwTxtFileNo)) {
-                // color = &yellow;
+                ImGui::Text(SHRINE_SETTING_STR);
             } else if (is_transit(pu->dwTxtFileNo)) {
-                // color = &cyan;
+                ImGui::Text(WEIRD_CONNECTION_SETTING_STR);
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
-                continue;
+                // continue;
+                ImGui::Text(BORING_SETTING_STR);
             }
         } else if (pu->dwType == 5) {  //tiles
-            if (is_backward_tile(pu->dwTxtFileNo)) {
-                // color = &green_bis; //probably not what you're searching for
+            if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
+                ImGui::Text(LEVEL_CONNECTION_UP_SETTING_STR);
             } else {
-                // color = &green;
+                ImGui::Text(LEVEL_CONNECTION_DOWN_SETTING_STR);
             }
         } else { // ???
-            // color = &white;
+            ImGui::Text(UNKNOWN_SETTING_STR);
         }
-        // ;
     }
 }
-*/
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -253,7 +280,6 @@ inline static void draw_settings(void)
 inline static void frame_callback(void *data)
 {
     GameState *game = (GameState *)data;
-    static bool p_open = true;
 
     ImGui::SetNextWindowPos(ImVec2(10, 25),
                             ImGuiCond_FirstUseEver);
@@ -270,23 +296,32 @@ inline static void frame_callback(void *data)
     }
     ImGui::End();
 
-    if (p_open) {
-        // if (ImGui::Begin("debug", &p_open, 0)) {
-        //     pthread_mutex_lock(&game->mutex);
-        //     if (!game->level) {
-        //         ImGui::Text("Loading...");
-        //     } else {
-        //         draw_debug(game);
-        //     }
-        //     pthread_mutex_unlock(&game->mutex);
-        // }
-        // ImGui::End();
-
+    static bool show_settings = true;
+    if (show_settings) {
         ImGui::SetNextWindowPos(ImVec2(10, 3),
                                 ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowCollapsed(TRUE, ImGuiCond_FirstUseEver);
-        if (ImGui::Begin("settings", &p_open, 0)) {
+        if (ImGui::Begin("settings", &show_settings, 0)) {
             draw_settings();
+        }
+        ImGui::End();
+    }
+
+    static bool show_debug = true;
+    if (show_debug) {
+        ImGui::SetNextWindowPos(ImVec2(350, 3),
+                                ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowSize(ImVec2(120, WINDOW_HEIGHT / 2),
+                                 ImGuiCond_FirstUseEver);
+        ImGui::SetNextWindowCollapsed(TRUE, ImGuiCond_FirstUseEver);
+        if (ImGui::Begin("debug", &show_debug, 0)) {
+            pthread_mutex_lock(&game->mutex);
+            if (!game->level) {
+                ImGui::Text("Loading...");
+            } else {
+                draw_debug(game);
+            }
+            pthread_mutex_unlock(&game->mutex);
         }
         ImGui::End();
     }

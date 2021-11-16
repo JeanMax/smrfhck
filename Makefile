@@ -17,7 +17,7 @@
 ##
 
 # name of the binary to make
-PROJECT = smrfhck
+PROJECT := smrfhck
 
 # your favorite lib ever
 LSMRF_DIR = extern/libsmrf
@@ -53,7 +53,7 @@ TEST_DIR = test
 LDLIBS = $(LSMRF_LIB)
 
 # linking flags
-LDFLAGS = -s
+LDFLAGS =
 
 # compilation flags
 CPPFLAGS =
@@ -108,6 +108,7 @@ ifeq ($(OS), Windows_NT)
     LDLIBS += $(shell $(SDL_BUILD_DIR)/bin/sdl2-config --static-libs)
     CPPFLAGS += $(shell $(SDL_BUILD_DIR)/bin/sdl2-config --cflags)
 	SDL_LIB = $(SDL_BUILD_DIR)/bin/SDL2.dll
+    PROJ_SUF = .exe
 
     # LDLIBS += -lgdi32 -lopengl32 -limm32
     # LDLIBS += $(shell pkg-config --static --libs sdl2)
@@ -137,26 +138,27 @@ endif
 # release build
 all:
 	+$(MAKE) -C $(LSMRF_DIR)
-	+$(MAKE) $(PROJECT) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
+	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)" \
+        "LDFLAGS = $(LDFLAGS) -s"
 
 # masochist build
 mecry:
 	+$(MAKE) -C $(LSMRF_DIR) mecry
-	+$(MAKE) $(PROJECT) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
+	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
 
 # build for gdb/valgrind debugging
 dev:
 	+$(MAKE) -C $(LSMRF_DIR) dev
-	+$(MAKE) $(PROJECT)_dev \
+	+$(MAKE) $(PROJECT)_dev$(PROJ_SUF) \
 		"PROJECT = $(PROJECT)_dev" "LSMRF_LIB = $(LSMRF_LIB:.a=_dev.a)" \
 		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev$(OS)"
 
 # build for runtime debugging (fsanitize)
 san:
 	+$(MAKE) -C $(LSMRF_DIR) san
-	+$(MAKE) $(PROJECT)_san \
+	+$(MAKE) $(PROJECT)_san$(PROJ_SUF) \
 		"PROJECT = $(PROJECT)_san" "LSMRF_LIB = $(LSMRF_LIB:.a=_san.a)" \
-		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san$(OS)"
+		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san$(OS)" "CC = clang" "CXX = clang++"
 
 # remove all generated .o and .d
 clean:
@@ -200,7 +202,7 @@ sdl: $(SDL_LIB)
 ##
 
 # create binary (link)
-$(PROJECT): $(OBJ) $(LSMRF_LIB) $(SDL_LIB)
+$(PROJECT)$(PROJ_SUF): $(OBJ) $(LSMRF_LIB) $(SDL_LIB)
 	$(CXX) $(CFLAGS) $(INC) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
 
 # create object files (compile)
