@@ -13,7 +13,10 @@
 #include <SDL_opengl.h>
 #endif
 
-#include <unistd.h> // sleep
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+
 #include <thread>
 #include <mutex>
 #include <chrono>
@@ -59,6 +62,8 @@ extern std::map<const char *, Setting> g_settings;
 #define CONFIG_COLOR_SECTION "Colors"
 #define CONFIG_SIZE_SECTION "Size"
 #define CONFIG_SHAPE_SECTION "Shape"
+
+#define LOG_FILE "smrfhck.log"
 
 typedef void t_frame_callback(void *data);
 

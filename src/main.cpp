@@ -332,6 +332,24 @@ inline static void frame_callback(void *data)
     // }
 }
 
+static bool redirect_output_to_file(const char *filename)
+{
+    int fd = open(filename, O_CREAT | O_RDWR | O_APPEND, 00644);
+    if (fd < 0) {
+        LOG_ERROR("Can't redirect output to logfile (will you ever read this?!)");
+        return FALSE;
+    }
+    return dup2(fd, STDOUT_FILENO) >= 0
+        && dup2(fd, STDERR_FILENO) >= 0;
+}
+
+static const char *get_date_str()
+{
+    time_t tt;
+    time(&tt);
+    return asctime(localtime(&tt));
+}
+
 static void game_refresher(void *data)
 {
     GameState *game = (GameState *)data;
@@ -343,6 +361,9 @@ static void game_refresher(void *data)
 
 int main(int, char**)
 {
+    redirect_output_to_file(LOG_FILE);
+    LOG_INFO("\n\n%s *Starting smrfhck*", get_date_str());
+
     GameState game;
     init_game_state(&game);
 

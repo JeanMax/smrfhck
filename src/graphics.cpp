@@ -5,7 +5,6 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <iterator>
 #include "INIReader.h"
 
 #define SQRT2  1.41421356f
