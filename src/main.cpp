@@ -1,8 +1,8 @@
 #include "smrfhck.hpp"
 
-#define CURRENT_LEVEL_ROOM2_SETTING_STR   "Current Level's Room2"
-#define OTHER_LEVEL_ROOM2_SETTING_STR     "Other Level's Room2"
-#define OTHER_LEVEL_SETTING_STR           "Other Level"
+#define CURRENT_LEVEL_SETTING_STR         "Current Level"
+#define NEXT_LEVEL_SETTING_STR            "Next Level"
+#define PREV_LEVEL_SETTING_STR            "Previous Level"
 #define PLAYER_SETTING_STR                "Player (it's you!)"
 #define NPC_PRESET_SETTING_STR            "Npc/Monster Preset"
 #define LEVEL_CONNECTION_UP_SETTING_STR   "Level Connection Up"
@@ -15,16 +15,16 @@
 #define BORING_SETTING_STR                "Not Interesting"
 
 std::map<const char *, Setting> g_settings {
-    {CURRENT_LEVEL_ROOM2_SETTING_STR, {
+    {CURRENT_LEVEL_SETTING_STR, {
             .color=ImColor(COLOR_BLACK_1, 0.8f), .size=0.f, .is_circle=0}},
-    {OTHER_LEVEL_ROOM2_SETTING_STR, {
+    {NEXT_LEVEL_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
-    {OTHER_LEVEL_SETTING_STR, {
-            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
+    {PREV_LEVEL_SETTING_STR, {
+            .color=ImColor(COLOR_RED_2, 0.8f), .size=0.f, .is_circle=0}},
     {PLAYER_SETTING_STR, {
-            .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.020f, .is_circle=1}},
+            .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.007f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
-            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.015f, .is_circle=1}},
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},
     {LEVEL_CONNECTION_UP_SETTING_STR, {
             .color=ImColor(COLOR_GREEN_2, 0.8f), .size=0.025f, .is_circle=0}},
     {LEVEL_CONNECTION_DOWN_SETTING_STR, {
@@ -68,13 +68,16 @@ static void draw_level_connection(GameState *game, float max_size)
             continue;
         }
 
+        ImColor *color = &g_settings[lvl->dwLevelNo > game->level->dwLevelNo ?
+                                     NEXT_LEVEL_SETTING_STR
+                                     : PREV_LEVEL_SETTING_STR].color;
         if (lvl->pRoom2First) {
             for (Room2 *r = lvl->pRoom2First; r; r = r->pRoom2Next) {
                 draw_rect(((float)r->dwPosX - (float)game->level->dwPosX) / max_size,
                           ((float)r->dwPosY - (float)game->level->dwPosY) / max_size,
                           (float)r->dwSizeX / max_size,
                           (float)r->dwSizeY / max_size,
-                          &g_settings[OTHER_LEVEL_ROOM2_SETTING_STR].color);
+                          color);
             }
         } else {
             // LOG_INFO("no room2 in lvl %d", lvl->dwLevelNo);
@@ -82,7 +85,7 @@ static void draw_level_connection(GameState *game, float max_size)
                       ((float)lvl->dwPosY - (float)game->level->dwPosY) / max_size,
                       (float)lvl->dwSizeX / max_size,
                       (float)lvl->dwSizeY / max_size,
-                      &g_settings[OTHER_LEVEL_SETTING_STR].color); //level
+                      color); //level
         }
 
     }
@@ -150,7 +153,7 @@ inline static void draw_map(GameState *game)
                   ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
                   (float)r2->dwSizeX / max_size,
                   (float)r2->dwSizeY / max_size,
-                  &g_settings[CURRENT_LEVEL_ROOM2_SETTING_STR].color); //room2
+                  &g_settings[CURRENT_LEVEL_SETTING_STR].color); //room2
 
         // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pRoomNext) {
         //     draw_rect((float)(r1->dwPosX - game->level->dwPosX) / max_size,
@@ -258,9 +261,9 @@ inline static void draw_settings(void)
                           ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
         ImGui::Text("%s", it->first);
-        if (strcmp(it->first, CURRENT_LEVEL_ROOM2_SETTING_STR)
-                && strcmp(it->first, OTHER_LEVEL_ROOM2_SETTING_STR)
-                && strcmp(it->first, OTHER_LEVEL_SETTING_STR)) {
+        if (strcmp(it->first, CURRENT_LEVEL_SETTING_STR)
+                && strcmp(it->first, PREV_LEVEL_SETTING_STR)
+                && strcmp(it->first, NEXT_LEVEL_SETTING_STR)) { // those are just rect
             ImGui::SameLine(200);
             ImGui::PushItemWidth(90);
             ImGui::PushID(i++);
