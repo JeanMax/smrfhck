@@ -1,7 +1,7 @@
 smrfhck
+smrfhck.ini
 *.exe
 *.san
 *.dev
 *.o
 *.d
-imgui.ini

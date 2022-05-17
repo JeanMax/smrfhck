@@ -17,11 +17,11 @@
 ##
 
 # name of the binary to make
-PROJECT = smrfhck
+PROJECT := smrfhck
 
 # your favorite lib ever
 LSMRF_DIR = extern/libsmrf
-LSMRF_LIB = $(LSMRF_DIR)/libsmrf.a
+LSMRF_LIB = $(LSMRF_DIR)/libsmrf$(OS).a
 
 # another cool lib
 IMGUI_DIR = extern/imgui
@@ -31,6 +31,8 @@ SDL_DIR = extern/SDL
 SDL_BUILD_DIR = $(SDL_DIR)/build
 SDL_LIB = $(SDL_BUILD_DIR)/libSDL2.la
 
+# a simple config parser lib
+INI_DIR = extern/inih
 
 # file-names of the sources
 SRC_NAME = main.cpp graphics.cpp \
@@ -41,7 +43,8 @@ SRC_NAME = main.cpp graphics.cpp \
 SRC_PATH = src $(IMGUI_DIR) $(IMGUI_DIR)/backends
 
 # folder-names containing headers files
-INC_PATH = include $(LSMRF_DIR)/include $(IMGUI_DIR) $(IMGUI_DIR)/backends
+INC_PATH = include $(LSMRF_DIR)/include \
+           $(INI_DIR) $(IMGUI_DIR) $(IMGUI_DIR)/backends
 
 # where are your tests?
 TEST_DIR = test
@@ -62,7 +65,7 @@ CPPFLAGS =
 ##
 
 # compilation/linking flags for the differents public rules
-WFLAGS = -std=c++11 -Wextra -Wall -Winline  # warnings
+WFLAGS = -std=c++11 -Wextra -Wall  # warnings
 RCFLAGS = $(WFLAGS) -O2  # release
 DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG  # debug
 SCFLAGS = $(DCFLAGS) -fsanitize=address,undefined  # sanitize
@@ -105,6 +108,7 @@ ifeq ($(OS), Windows_NT)
     LDLIBS += $(shell $(SDL_BUILD_DIR)/bin/sdl2-config --static-libs)
     CPPFLAGS += $(shell $(SDL_BUILD_DIR)/bin/sdl2-config --cflags)
 	SDL_LIB = $(SDL_BUILD_DIR)/bin/SDL2.dll
+    PROJ_SUF = .exe
 
     # LDLIBS += -lgdi32 -lopengl32 -limm32
     # LDLIBS += $(shell pkg-config --static --libs sdl2)
@@ -114,6 +118,8 @@ else ifeq ($(UNAME_S), Linux)
     LDLIBS += -lGL -ldl
     LDLIBS += $(shell sdl2-config --libs)
     CPPFLAGS += $(shell sdl2-config --cflags)
+    CC += -march=native
+    CXX += -march=native
 
 else ifeq ($(UNAME_S), Darwin)  # untested
     LDLIBS += -framework OpenGL -framework Cocoa -framework IOKit -framework CoreVideo
@@ -132,26 +138,27 @@ endif
 # release build
 all:
 	+$(MAKE) -C $(LSMRF_DIR)
-	+$(MAKE) $(PROJECT) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel"
+	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)" \
+        "LDFLAGS = $(LDFLAGS) -s"
 
 # masochist build
 mecry:
 	+$(MAKE) -C $(LSMRF_DIR) mecry
-	+$(MAKE) $(PROJECT) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel"
+	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
 
 # build for gdb/valgrind debugging
 dev:
 	+$(MAKE) -C $(LSMRF_DIR) dev
-	+$(MAKE) $(PROJECT).dev \
-		"PROJECT = $(PROJECT).dev" "LSMRF_LIB = $(LSMRF_LIB).dev" \
-		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev"
+	+$(MAKE) $(PROJECT)_dev$(PROJ_SUF) \
+		"PROJECT = $(PROJECT)_dev" "LSMRF_LIB = $(LSMRF_LIB:.a=_dev.a)" \
+		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev$(OS)"
 
 # build for runtime debugging (fsanitize)
 san:
 	+$(MAKE) -C $(LSMRF_DIR) san
-	+$(MAKE) $(PROJECT).san \
-		"PROJECT = $(PROJECT).san" "LSMRF_LIB = $(LSMRF_LIB).san" \
-		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san"
+	+$(MAKE) $(PROJECT)_san$(PROJ_SUF) \
+		"PROJECT = $(PROJECT)_san" "LSMRF_LIB = $(LSMRF_LIB:.a=_san.a)" \
+		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san$(OS)" "CC = clang" "CXX = clang++"
 
 # remove all generated .o and .d
 clean:
@@ -195,7 +202,7 @@ sdl: $(SDL_LIB)
 ##
 
 # create binary (link)
-$(PROJECT): $(OBJ) $(LSMRF_LIB) $(SDL_LIB)
+$(PROJECT)$(PROJ_SUF): $(OBJ) $(LSMRF_LIB) $(SDL_LIB)
 	$(CXX) $(CFLAGS) $(INC) $(LDFLAGS) $(OBJ) $(LDLIBS) -o $@
 
 # create object files (compile)

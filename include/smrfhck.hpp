@@ -13,10 +13,14 @@
 #include <SDL_opengl.h>
 #endif
 
-#include <unistd.h> // sleep
+#include <fcntl.h>
+#include <unistd.h>
+#include <time.h>
+
 #include <thread>
 #include <mutex>
 #include <chrono>
+#include <map>
 
 #include <smrf.h>
 
@@ -39,6 +43,14 @@
 #define COLOR_WHITE_1   0.741f,  0.741f, 0.702f
 #define COLOR_WHITE_2   0.8f,    0.8f,   0.8f    //bg
 
+typedef struct setting Setting;
+struct setting {
+    ImColor color;
+    float size;
+    bool is_circle;
+};
+
+extern std::map<const char *, Setting> g_settings;
 
 
 // graphics.cpp
@@ -46,10 +58,19 @@
 #define WINDOW_WIDTH  480
 #define WINDOW_HEIGHT 600
 
+#define CONFIG_FILE "smrfhck.ini"
+#define CONFIG_COLOR_SECTION "Colors"
+#define CONFIG_SIZE_SECTION "Size"
+#define CONFIG_SHAPE_SECTION "Shape"
+#define CONFIG_WINDOW_SECTION "Main"
+
+#define LOG_FILE "smrfhck.log"
+
 typedef void t_frame_callback(void *data);
 
 bool render_loop(t_frame_callback frame_callback, void *data);
+void draw_circle(float x, float y, float radius, ImColor *color);
 void draw_rect(float x, float y, float w, float h, ImColor *color);
-
+void draw(float x, float y, Setting *s);
 
 #endif

@@ -1,13 +1,19 @@
 #include "smrfhck.hpp"
+#include "icon.hpp"
+
+// to manage config file
+#include <string>
+#include <iostream>
+#include <fstream>
+#include "INIReader.h"
 
 #define SQRT2  1.41421356f
 #define COS_45 (SQRT2 / 2.f)
 #define SIN_45 COS_45
 
-
-//TODO: add draw_circle
-void draw_rect(float x, float y, float w, float h, ImColor *color)
+void draw_circle(float x, float y, float radius, ImColor *color)
 {
+    //TODO: optimize
     ImVec2 vMin = ImGui::GetWindowContentRegionMin();
     ImVec2 vMax = ImGui::GetWindowContentRegionMax();
     vMin.x += ImGui::GetWindowPos().x;
@@ -15,7 +21,34 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
     vMax.x += ImGui::GetWindowPos().x;
     vMax.y += ImGui::GetWindowPos().y;
 
-    // printf("win: (%f, %f) (%f, %f)\n", vMin.x, vMin.y, vMax.x, vMax.y);
+    // assume 0 >= x,y,radius >= 1, 1 == full width/height
+    float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
+    x *= max_size;
+    y *= max_size;
+    radius *= max_size;
+
+    ImVec2 center(x, y);
+    center = ImRotate(center, COS_45, SIN_45);
+
+    //window offset
+    center.x += vMin.x, center.y += vMin.y;
+
+    //compensate rotate
+    ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
+    center.x += win_center.x;
+
+    ImGui::GetWindowDrawList()->AddCircleFilled(center, radius, *color, 0);
+}
+
+void draw_rect(float x, float y, float w, float h, ImColor *color)
+{
+    //TODO: optimize
+    ImVec2 vMin = ImGui::GetWindowContentRegionMin();
+    ImVec2 vMax = ImGui::GetWindowContentRegionMax();
+    vMin.x += ImGui::GetWindowPos().x;
+    vMin.y += ImGui::GetWindowPos().y;
+    vMax.x += ImGui::GetWindowPos().x;
+    vMax.y += ImGui::GetWindowPos().y;
 
     // assume 0 >= x,y,w,h >= 1, 1 == full width/height
     float max_size = MIN((vMax.x - vMin.x) / SQRT2, (vMax.y - vMin.y) / SQRT2);
@@ -23,9 +56,6 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
     y *= max_size;
     w *= max_size;
     h *= max_size;
-
-    // printf("max_size: %f\n", max_size);
-
 
     ImVec2 rect_a(x, y);
     ImVec2 rect_b(x + w, y);
@@ -45,24 +75,146 @@ void draw_rect(float x, float y, float w, float h, ImColor *color)
 
     //compensate rotate
     ImVec2 win_center = ImVec2((vMax.x - vMin.x) / 2, (vMax.y - vMin.y) / 2);
-    rect_a.x += win_center.x;//, rect_a.y += vMin.y;
-    rect_b.x += win_center.x;//, rect_b.y += vMin.y;
-    rect_c.x += win_center.x;//, rect_c.y += vMin.y;
-    rect_d.x += win_center.x;//, rect_d.y += vMin.y;
+    rect_a.x += win_center.x;
+    rect_b.x += win_center.x;
+    rect_c.x += win_center.x;
+    rect_d.x += win_center.x;
 
-    // printf("rect: (%f, %f) (%f, %f)\n",
-    //        rect_a.x, rect_b.y,
-    //     );
+    ImGui::GetWindowDrawList()->AddQuadFilled(rect_a,
+                                              rect_b,
+                                              rect_c,
+                                              rect_d,
+                                              *color);
+}
+
+void draw(float x, float y, Setting *s)
+{
+    if (s->is_circle) {
+        draw_circle(x, y, s->size, &s->color);
+    } else { //square
+        draw_rect(x - s->size / 2, y - s->size / 2, s->size, s->size, &s->color);
+    }
+}
 
 
-    ImGui::GetWindowDrawList()->AddQuadFilled(
-        rect_a,
-        rect_b,
-        rect_c,
-        rect_d,
-        // ImGui::ColorConvertFloat4ToU32(ImVec4(1, .15, .15, 1)) );
-        *color);
-    // ImGui::GetWindowDrawList()->PushClipRectFullScreen();
+
+////////////////////////////////////////////////////////////////////////////////
+
+static void set_icon(SDL_Window* window)
+{
+    const unsigned char pixel_data[ICON_PIXEL_DATA_SIZE] = ICON_PIXEL_DATA;
+
+    // these masks are needed to tell SDL_CreateRGBSurface(From)
+    // to assume the data it gets is byte-wise RGB(A) data
+    Uint32 rmask, gmask, bmask, amask;
+#if SDL_BYTEORDER == SDL_BIG_ENDIAN
+    int shift = (my_icon.bytes_per_pixel == 3) ? 8 : 0;
+    rmask = 0xff000000 >> shift;
+    gmask = 0x00ff0000 >> shift;
+    bmask = 0x0000ff00 >> shift;
+    amask = 0x000000ff >> shift;
+#else // little endian, like x86
+    rmask = 0x000000ff;
+    gmask = 0x0000ff00;
+    bmask = 0x00ff0000;
+    amask = (ICON_BYTES_PER_PIXEL == 3) ? 0 : 0xff000000;
+#endif
+
+    SDL_Surface* icon = SDL_CreateRGBSurfaceFrom((void*)pixel_data,
+                                                 ICON_WIDTH, ICON_HEIGHT,
+                                                 ICON_BYTES_PER_PIXEL * 8,
+                                                 ICON_BYTES_PER_PIXEL * ICON_WIDTH,
+                                                 rmask, gmask, bmask, amask);
+    SDL_SetWindowIcon(window, icon);
+    SDL_FreeSurface(icon);
+}
+
+static int *read_window_config()
+{
+    static int win[4] = {
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        WINDOW_WIDTH, WINDOW_HEIGHT
+    };
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        long i = reader.GetInteger(CONFIG_WINDOW_SECTION, "x", -1);
+        if (i >= 0) {
+            win[0] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "y", -1);
+        if (i >= 0) {
+            win[1] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "w", -1);
+        if (i >= 0) {
+            win[2] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "h", -1);
+        if (i >= 0) {
+            win[3] = i;
+        }
+    }
+    return (int *)&win;
+}
+
+static void read_config()
+{
+    std::ifstream ifs(CONFIG_FILE);
+    std::string config_content(std::istreambuf_iterator<char>{ifs}, {});
+    ImGui::LoadIniSettingsFromMemory(config_content.c_str(), config_content.size());
+    ifs.close();
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+            std::string color = reader.Get(CONFIG_COLOR_SECTION, it->first, "");
+            if (color.size()) {
+                //Get+stoll instead of GetInt to avoid overflow
+                g_settings[it->first].color = ImColor((ImU32)std::stoll(color));
+            }
+            float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
+            if (size >= 0) {
+                g_settings[it->first].size = size;
+            }
+            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, it->first, -1);
+            if (is_circle >= 0) {
+                g_settings[it->first].is_circle = is_circle;
+            }
+        }
+    }
+}
+
+static void write_config(SDL_Window *window)
+{
+    const char *config_content = ImGui::SaveIniSettingsToMemory(NULL);
+    std::ofstream ofs(CONFIG_FILE);
+
+    ofs << config_content
+        << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.color << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SIZE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.size << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SHAPE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.is_circle << std::endl;
+    }
+
+    int x, y, w, h;
+    SDL_GetWindowPosition(window, &x, &y);
+    SDL_GetWindowSize(window, &w, &h);
+    ofs << std::endl
+        << "[" << CONFIG_WINDOW_SECTION << "]" << std::endl;
+    ofs << "x=" << x << std::endl;
+    ofs << "y=" << y << std::endl;
+    ofs << "w=" << w << std::endl;
+    ofs << "h=" << h << std::endl;
+
+    ofs.close();
 }
 
 static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
@@ -70,8 +222,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER)) {
         printf("Error: %s\n", SDL_GetError());
         return FALSE;
     }
@@ -104,20 +255,26 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    int *win_dim = read_window_config();
     *window = SDL_CreateWindow(WINDOW_NAME,
-                              SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                              WINDOW_WIDTH, WINDOW_HEIGHT,
-                              SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+                               win_dim[0], win_dim[1],
+                               win_dim[2], win_dim[3],
+                               SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     *gl_context = SDL_GL_CreateContext(*window);
+    set_icon(*window);
+
     SDL_GL_MakeCurrent(*window, *gl_context);
     SDL_GL_SetSwapInterval(1); // Enable vsync
 
     // Setup Dear ImGui context
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
-    // ImGuiIO& io = ImGui::GetIO();
+
+    ImGuiIO &io = ImGui::GetIO();
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+    io.IniFilename = NULL;
+    read_config();
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -132,6 +289,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
 
 static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
 {
+    write_config(window);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
