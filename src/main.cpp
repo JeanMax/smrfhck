@@ -175,6 +175,7 @@ inline static void draw_map(GameState *game)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
+
 inline static float distance(float x1, float y1, float x2, float y2)
 {
     return hypotf(x1 - x2, y1 - y2);
@@ -192,7 +193,7 @@ inline static void draw_debug(GameState *game)
             ImVec2 preset((float)r2->dwPosX - (float)game->level->dwPosX + (float)pu->dwPosX / 5.f,
                           (float)r2->dwPosY - (float)game->level->dwPosY + (float)pu->dwPosY / 5.f);
             float pu_dist = distance(player.x, player.y, preset.x, preset.y);
-            if (pu_dist > 5) {
+            if (pu_dist > 1.5) {
                 continue;
             }
             preset_map[((qword)pu->dwType << 32) + pu->dwTxtFileNo] = pu;

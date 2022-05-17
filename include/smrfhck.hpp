@@ -62,6 +62,7 @@ extern std::map<const char *, Setting> g_settings;
 #define CONFIG_COLOR_SECTION "Colors"
 #define CONFIG_SIZE_SECTION "Size"
 #define CONFIG_SHAPE_SECTION "Shape"
+#define CONFIG_WINDOW_SECTION "Main"
 
 #define LOG_FILE "smrfhck.log"
 

@@ -129,13 +129,100 @@ static void set_icon(SDL_Window* window)
     SDL_FreeSurface(icon);
 }
 
+static int *read_window_config()
+{
+    static int win[4] = {
+        SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
+        WINDOW_WIDTH, WINDOW_HEIGHT
+    };
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        long i = reader.GetInteger(CONFIG_WINDOW_SECTION, "x", -1);
+        if (i >= 0) {
+            win[0] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "y", -1);
+        if (i >= 0) {
+            win[1] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "w", -1);
+        if (i >= 0) {
+            win[2] = i;
+        }
+        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "h", -1);
+        if (i >= 0) {
+            win[3] = i;
+        }
+    }
+    return (int *)&win;
+}
+
+static void read_config()
+{
+    std::ifstream ifs(CONFIG_FILE);
+    std::string config_content(std::istreambuf_iterator<char>{ifs}, {});
+    ImGui::LoadIniSettingsFromMemory(config_content.c_str(), config_content.size());
+    ifs.close();
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+            std::string color = reader.Get(CONFIG_COLOR_SECTION, it->first, "");
+            if (color.size()) {
+                //Get+stoll instead of GetInt to avoid overflow
+                g_settings[it->first].color = ImColor((ImU32)std::stoll(color));
+            }
+            float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
+            if (size >= 0) {
+                g_settings[it->first].size = size;
+            }
+            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, it->first, -1);
+            if (is_circle >= 0) {
+                g_settings[it->first].is_circle = is_circle;
+            }
+        }
+    }
+}
+
+static void write_config(SDL_Window *window)
+{
+    const char *config_content = ImGui::SaveIniSettingsToMemory(NULL);
+    std::ofstream ofs(CONFIG_FILE);
+
+    ofs << config_content
+        << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.color << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SIZE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.size << std::endl;
+    }
+    ofs << std::endl
+        << "[" << CONFIG_SHAPE_SECTION << "]" << std::endl;
+    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
+        ofs << it->first << "=" << it->second.is_circle << std::endl;
+    }
+
+    int x, y, w, h;
+    SDL_GetWindowPosition(window, &x, &y);
+    SDL_GetWindowSize(window, &w, &h);
+    ofs << std::endl
+        << "[" << CONFIG_WINDOW_SECTION << "]" << std::endl;
+    ofs << "x=" << x << std::endl;
+    ofs << "y=" << y << std::endl;
+    ofs << "w=" << w << std::endl;
+    ofs << "h=" << h << std::endl;
+
+    ofs.close();
+}
+
 static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
 {
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
     // depending on whether SDL_INIT_GAMECONTROLLER is enabled or disabled.. updating to latest version of SDL is recommended!)
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER) != 0)
-    {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_TIMER | SDL_INIT_GAMECONTROLLER)) {
         printf("Error: %s\n", SDL_GetError());
         return FALSE;
     }
@@ -168,9 +255,10 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
     SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
     SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
+    int *win_dim = read_window_config();
     *window = SDL_CreateWindow(WINDOW_NAME,
-                               SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-                               WINDOW_WIDTH, WINDOW_HEIGHT,
+                               win_dim[0], win_dim[1],
+                               win_dim[2], win_dim[3],
                                SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
     *gl_context = SDL_GL_CreateContext(*window);
     set_icon(*window);
@@ -186,28 +274,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.IniFilename = NULL;
-    std::ifstream ifs(CONFIG_FILE);
-    std::string config_content(std::istreambuf_iterator<char>{ifs}, {});
-    ImGui::LoadIniSettingsFromMemory(config_content.c_str(), config_content.size());
-    ifs.close();
-    INIReader reader(CONFIG_FILE);
-    if (!reader.ParseError()) {
-        for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-            std::string color = reader.Get(CONFIG_COLOR_SECTION, it->first, "");
-            if (color.size()) {
-                //Get+stoll instead of GetInt to avoid overflow
-                g_settings[it->first].color = ImColor((ImU32)std::stoll(color));
-            }
-            float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
-            if (size >= 0) {
-                g_settings[it->first].size = size;
-            }
-            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, it->first, -1);
-            if (is_circle >= 0) {
-                g_settings[it->first].is_circle = is_circle;
-            }
-        }
-    }
+    read_config();
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -222,25 +289,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
 
 static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
 {
-    const char *config_content = ImGui::SaveIniSettingsToMemory(NULL);
-    std::ofstream ofs(CONFIG_FILE);
-    ofs << config_content
-        << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.color << std::endl;
-    }
-    ofs << std::endl
-        << "[" << CONFIG_SIZE_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.size << std::endl;
-    }
-    ofs << std::endl
-        << "[" << CONFIG_SHAPE_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.is_circle << std::endl;
-    }
-    ofs.close();
-
+    write_config(window);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
