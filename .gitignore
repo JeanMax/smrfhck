@@ -1,7 +1,8 @@
 smrfhck
+smrfhck_dev
+smrfhck_san
 smrfhck.ini
+smrfhck.log
 *.exe
-*.san
-*.dev
 *.o
 *.d

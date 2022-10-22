@@ -1,6 +1,7 @@
 #include "smrfhck.hpp"
 
 #define CURRENT_LEVEL_SETTING_STR         "Current Level"
+#define EXPLORED_AREAS_SETTING_STR         "Explored Areas"
 #define NEXT_LEVEL_SETTING_STR            "Next Level"
 #define PREV_LEVEL_SETTING_STR            "Previous Level"
 #define PLAYER_SETTING_STR                "Player (it's you!)"
@@ -17,6 +18,8 @@
 std::map<const char *, Setting> g_settings {
     {CURRENT_LEVEL_SETTING_STR, {
             .color=ImColor(COLOR_BLACK_1, 0.8f), .size=0.f, .is_circle=0}},
+    {EXPLORED_AREAS_SETTING_STR, {
+            .color=ImColor(COLOR_BLACK_2, 0.8f), .size=0.f, .is_circle=0}},
     {NEXT_LEVEL_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.f, .is_circle=0}},
     {PREV_LEVEL_SETTING_STR, {
@@ -51,7 +54,7 @@ static dword get_level_size(GameState *game)
     while (r2) {
         max = MAX(max, (r2->dwPosX - game->level->dwPosX + r2->dwSizeX) * 5);
         max = MAX(max, (r2->dwPosY - game->level->dwPosY + r2->dwSizeY) * 5);
-        r2 = r2->pRoom2Next;
+        r2 = r2->pNext;
     }
     return max;
 }
@@ -72,7 +75,7 @@ static void draw_level_connection(GameState *game, float max_size)
                                      NEXT_LEVEL_SETTING_STR
                                      : PREV_LEVEL_SETTING_STR].color;
         if (lvl->pRoom2First) {
-            for (Room2 *r = lvl->pRoom2First; r; r = r->pRoom2Next) {
+            for (Room2 *r = lvl->pRoom2First; r; r = r->pNext) {
                 draw_rect(((float)r->dwPosX - (float)game->level->dwPosX) / max_size,
                           ((float)r->dwPosY - (float)game->level->dwPosY) / max_size,
                           (float)r->dwSizeX / max_size,
@@ -95,7 +98,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
 {
     Setting *setting;
 
-    for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
+    for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pNext) {
         if (pu->dwType == 1) { //monster/npc
             if (is_uninteresting_unit(pu->dwTxtFileNo)) {
                 continue;
@@ -148,23 +151,24 @@ inline static void draw_map(GameState *game)
 
     draw_level_connection(game, max_size);
 
-    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pNext) {
         draw_rect(((float)r2->dwPosX - (float)game->level->dwPosX) / max_size,
                   ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
                   (float)r2->dwSizeX / max_size,
                   (float)r2->dwSizeY / max_size,
-                  &g_settings[CURRENT_LEVEL_SETTING_STR].color); //room2
+                  r2->pRoom1 ? &g_settings[EXPLORED_AREAS_SETTING_STR].color
+                  : &g_settings[CURRENT_LEVEL_SETTING_STR].color); //room2
 
-        // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pRoomNext) {
-        //     draw_rect((float)(r1->dwPosX - game->level->dwPosX) / max_size,
-        //               (float)(r1->dwPosY - game->level->dwPosY) / max_size,
-        //               (float)r1->dwSizeX / max_size,
-        //               (float)r1->dwSizeY / max_size,
-        //               &yellow);
+        // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pNext) {
+        //     draw_rect((float)(r1->dwPosXBig / 5.f - game->level->dwPosX) / max_size,
+        //               (float)(r1->dwPosYBig / 5.f - game->level->dwPosY) / max_size,
+        //               (float)r1->dwSizeXBig / 5.f / max_size,
+        //               (float)r1->dwSizeYBig / 5.f / max_size,
+        //               &g_settings[EXPLORED_AREAS_SETTING_STR].color); //room1
         // }
     }
 
-    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pNext) {
         //2nd iterate so it's drawn over room2
         draw_presets(r2, game->level, max_size);
     }
@@ -188,8 +192,8 @@ inline static void draw_debug(GameState *game)
     ImVec2 player((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX,
                   (float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY);
 
-    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pRoom2Next) {
-        for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pPresetNext) {
+    for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pNext) {
+        for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pNext) {
             ImVec2 preset((float)r2->dwPosX - (float)game->level->dwPosX + (float)pu->dwPosX / 5.f,
                           (float)r2->dwPosY - (float)game->level->dwPosY + (float)pu->dwPosY / 5.f);
             float pu_dist = distance(player.x, player.y, preset.x, preset.y);
