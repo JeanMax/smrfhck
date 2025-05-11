@@ -6,3 +6,6 @@ smrfhck.log
 *.exe
 *.o
 *.d
+
+compile_commands.json
+.cache

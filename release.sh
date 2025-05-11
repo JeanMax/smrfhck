@@ -24,14 +24,14 @@ for i in "" dev; do
     cp "$exe" "$WINE_PREFIX"
 done
 
-MOUNT_DIR=$(mktemp -d)
-WIN_PART=/dev/sda4
-WIN_DST=/Users/mc/Desktop/smrfhck
+# MOUNT_DIR=$(mktemp -d)
+# WIN_PART=/dev/sda4
+# WIN_DST=/Users/mc/Desktop/smrfhck
 
-sudo mount $WIN_PART "$MOUNT_DIR"
-rsync --delete -rltDvu \
-      --modify-window=1 \
-      --exclude '*.[od]' \
-      "$PWD/" "$MOUNT_DIR/$WIN_DST"
-sync
-sudo umount "$MOUNT_DIR"
+# sudo mount $WIN_PART "$MOUNT_DIR"
+# rsync --delete -rltDvu \
+#       --modify-window=1 \
+#       --exclude '*.[od]' \
+#       "$PWD/" "$MOUNT_DIR/$WIN_DST"
+# sync
+# sudo umount "$MOUNT_DIR"

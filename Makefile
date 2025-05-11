@@ -65,7 +65,7 @@ CPPFLAGS =
 ##
 
 # compilation/linking flags for the differents public rules
-WFLAGS = -std=c++11 -Wextra -Wall  # warnings
+WFLAGS = -std=c++23 -Wextra -Wall  # warnings
 RCFLAGS = $(WFLAGS) -O2  # release
 DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG  # debug
 SCFLAGS = $(DCFLAGS) -fsanitize=address,undefined  # sanitize
