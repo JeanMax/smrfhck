@@ -296,7 +296,7 @@ inline static void frame_callback(void *data)
     if (ImGui::Begin("smrfhck")) {
         pthread_mutex_lock(&game->mutex);
         if (!game->level) {
-            ImGui::Text("Loading...");
+            ImGui::Text("%s", *game->status ? game->status : "Searching for D2R.exe...");
         } else {
             draw_map(game);
         }
@@ -319,7 +319,7 @@ inline static void frame_callback(void *data)
     if (show_debug) {
         ImGui::SetNextWindowPos(ImVec2(350, 3),
                                 ImGuiCond_FirstUseEver);
-        ImGui::SetNextWindowSize(ImVec2(120, WINDOW_HEIGHT / 2),
+        ImGui::SetNextWindowSize(ImVec2(120, WINDOW_HEIGHT / 2.),
                                  ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowCollapsed(TRUE, ImGuiCond_FirstUseEver);
         if (ImGui::Begin("debug", &show_debug, 0)) {
