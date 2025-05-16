@@ -129,6 +129,15 @@ static void set_icon(SDL_Window* window)
     SDL_FreeSurface(icon);
 }
 
+static void read_player_name_config(GameState *game)
+{
+    INIReader reader(CONFIG_FILE);
+    if (!reader.ParseError()) {
+        std::string toto = reader.Get(CONFIG_WINDOW_SECTION, "player_name", "");
+		memcpy(game->player_name_setting, toto.c_str(), toto.size() + 1);
+    }
+}
+
 static int *read_window_config()
 {
     static int win[4] = {
@@ -183,7 +192,7 @@ static void read_config()
     }
 }
 
-static void write_config(SDL_Window *window)
+static void write_config(SDL_Window *window, GameState *game)
 {
     const char *config_content = ImGui::SaveIniSettingsToMemory(NULL);
     std::ofstream ofs(CONFIG_FILE);
@@ -213,11 +222,12 @@ static void write_config(SDL_Window *window)
     ofs << "y=" << y << std::endl;
     ofs << "w=" << w << std::endl;
     ofs << "h=" << h << std::endl;
+    ofs << "player_name=" << game->player_name_setting << std::endl;
 
     ofs.close();
 }
 
-static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
+static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context, GameState *game)
 {
     // Setup SDL
     // (Some versions of SDL before <2.0.10 appears to have performance/stalling issues on a minority of Windows systems,
@@ -275,6 +285,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.IniFilename = NULL;
     read_config();
+    read_player_name_config(game);
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
@@ -287,9 +298,9 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context)
     return TRUE;
 }
 
-static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context)
+static void clean_graphics(SDL_Window *window, SDL_GLContext gl_context, GameState *game)
 {
-    write_config(window);
+    write_config(window, game);
     ImGui_ImplOpenGL3_Shutdown();
     ImGui_ImplSDL2_Shutdown();
     ImGui::DestroyContext();
@@ -343,8 +354,9 @@ bool render_loop(t_frame_callback frame_callback, void *data)
 {
     SDL_Window *window;
     SDL_GLContext gl_context;
+	GameState *game = (GameState *)data;
 
-    if (!init_graphics(&window, &gl_context)) {
+    if (!init_graphics(&window, &gl_context, game)) {
         return FALSE;
     }
 
@@ -353,6 +365,6 @@ bool render_loop(t_frame_callback frame_callback, void *data)
         render(window);
     }
 
-    clean_graphics(window, gl_context);
+    clean_graphics(window, gl_context, game);
     return TRUE;
 }

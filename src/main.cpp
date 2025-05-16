@@ -245,10 +245,19 @@ inline static void draw_debug(GameState *game)
 
 ////////////////////////////////////////////////////////////////////////////////
 
-inline static void draw_settings(void)
+inline static void draw_settings(GameState *game)
 {
     // static bool check = true;
     int i = 0;
+
+    ImGui::SameLine();
+    ImGui::PushID(i++);
+    ImGui::InputTextWithHint("", "Player Name",
+                             game->player_name_setting,
+                             PLAYER_DATA_NAME_MAX);
+    ImGui::PopID();
+    ImGui::NewLine();
+    ImGui::NewLine();
 
     ImGui::SameLine(10);
     ImGui::Text("Color");
@@ -310,7 +319,9 @@ inline static void frame_callback(void *data)
                                 ImGuiCond_FirstUseEver);
         ImGui::SetNextWindowCollapsed(TRUE, ImGuiCond_FirstUseEver);
         if (ImGui::Begin("settings", &show_settings, 0)) {
-            draw_settings();
+            pthread_mutex_lock(&game->mutex);
+            draw_settings(game);
+            pthread_mutex_unlock(&game->mutex);
         }
         ImGui::End();
     }
