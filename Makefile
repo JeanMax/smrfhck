@@ -36,7 +36,7 @@ INI_DIR = extern/inih
 
 # file-names of the sources
 SRC_NAME = main.cpp graphics.cpp \
-           imgui_impl_sdl.cpp imgui_impl_opengl3.cpp \
+           imgui_impl_sdl2.cpp imgui_impl_opengl3.cpp \
            imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp # imgui_demo.cpp
 
 # folder-names of the sources
