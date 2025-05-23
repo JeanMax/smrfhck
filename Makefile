@@ -95,7 +95,7 @@ RM = rm -f
 RMDIR = rmdir
 MKDIR = mkdir -p
 # CXX ?= g++
-MAKE ?= make -j$(shell nproc 2>/dev/null || echo 1)
+MAKE = make -j
 SUB_MAKE = make -C
 
 # try to be cross-platform
@@ -137,25 +137,25 @@ endif
 
 # release build
 all:
-	+$(MAKE) -C $(LSMRF_DIR)
+	+$(SUB_MAKE) $(LSMRF_DIR)
 	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)" \
         "LDFLAGS = $(LDFLAGS) -s"
 
 # masochist build
 mecry:
-	+$(MAKE) -C $(LSMRF_DIR) mecry
+	+$(SUB_MAKE) $(LSMRF_DIR) mecry
 	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(WWFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)"
 
 # build for gdb/valgrind debugging
 dev:
-	+$(MAKE) -C $(LSMRF_DIR) dev
+	+$(SUB_MAKE) $(LSMRF_DIR) dev
 	+$(MAKE) $(PROJECT)_dev$(PROJ_SUF) \
 		"PROJECT = $(PROJECT)_dev" "LSMRF_LIB = $(LSMRF_LIB:.a=_dev.a)" \
 		"CFLAGS = $(DCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/dev$(OS)"
 
 # build for runtime debugging (fsanitize)
 san:
-	+$(MAKE) -C $(LSMRF_DIR) san
+	+$(SUB_MAKE) $(LSMRF_DIR) san
 	+$(MAKE) $(PROJECT)_san$(PROJ_SUF) \
 		"PROJECT = $(PROJECT)_san" "LSMRF_LIB = $(LSMRF_LIB:.a=_san.a)" \
 		"CFLAGS = $(SCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/san$(OS)" "CC = clang" "CXX = clang++"
@@ -168,22 +168,22 @@ clean:
 	$(RM) $(OBJ:$(OBJ_DIR)/rel%=$(OBJ_DIR)/san%)
 	$(RM) $(DEP:$(OBJ_DIR)/rel%=$(OBJ_DIR)/san%)
 	test -d $(OBJ_DIR) && find $(OBJ_DIR) -name '*.[od]' | xargs $(RM) || true
-	+$(MAKE) -C $(LSMRF_DIR) clean
+	+$(SUB_MAKE) $(LSMRF_DIR) clean
 
 # remove the generated binary, and all .o and .d
 fclean: clean
 	test -d $(OBJ_DIR) \
 && find $(OBJ_DIR) -type d | sort -r | xargs $(RMDIR) || true
 	$(RM) $(PROJECT){,_san,_dev}{,.exe}
-	+$(MAKE) -C $(LSMRF_DIR) fclean
-	+$(MAKE) -C $(SDL_BUILD_DIR) distclean || true
+	+$(SUB_MAKE) $(LSMRF_DIR) fclean
+	+$(SUB_MAKE) $(SDL_BUILD_DIR) distclean || true
 	$(RM) $(SDL_LIB)
 
 # some people like it real clean
 mrproper:
 	$(RM) -r $(OBJ_DIR)
 	+$(MAKE) fclean
-	+$(MAKE) -C $(LSMRF_DIR) mrproper
+	+$(SUB_MAKE) $(LSMRF_DIR) mrproper
 
 # clean build and recompile
 re: fclean
@@ -222,8 +222,8 @@ ifeq ($(OS), Windows_NT)
                 --disable-audio \
                 --target=x86_64-w64-mingw32 \
                 --host=x86_64-w64-mingw32
-	+$(MAKE) -C $(SDL_BUILD_DIR)
-	+$(MAKE) -C $(SDL_BUILD_DIR) install
+	+$(SUB_MAKE) $(SDL_BUILD_DIR)
+	+$(SUB_MAKE) $(SDL_BUILD_DIR) install
 else
 	touch $(SDL_LIB)
 endif # otherwise assume there's a system install

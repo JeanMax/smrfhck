@@ -102,7 +102,7 @@ void draw(float x, float y, Setting *s)
 
 static void set_icon(SDL_Window* window)
 {
-    const unsigned char pixel_data[ICON_PIXEL_DATA_SIZE] = ICON_PIXEL_DATA;
+    unsigned char pixel_data[ICON_PIXEL_DATA_SIZE] = ICON_PIXEL_DATA;
 
     // these masks are needed to tell SDL_CreateRGBSurface(From)
     // to assume the data it gets is byte-wise RGB(A) data
@@ -120,7 +120,7 @@ static void set_icon(SDL_Window* window)
     amask = (ICON_BYTES_PER_PIXEL == 3) ? 0 : 0xff000000;
 #endif
 
-    SDL_Surface* icon = SDL_CreateRGBSurfaceFrom((void*)pixel_data,
+    SDL_Surface* icon = SDL_CreateRGBSurfaceFrom((void *)pixel_data,
                                                  ICON_WIDTH, ICON_HEIGHT,
                                                  ICON_BYTES_PER_PIXEL * 8,
                                                  ICON_BYTES_PER_PIXEL * ICON_WIDTH,
@@ -146,19 +146,19 @@ static int *read_window_config()
     };
     INIReader reader(CONFIG_FILE);
     if (!reader.ParseError()) {
-        long i = reader.GetInteger(CONFIG_WINDOW_SECTION, "x", -1);
+        int i = (int)reader.GetInteger(CONFIG_WINDOW_SECTION, "x", -1);
         if (i >= 0) {
             win[0] = i;
         }
-        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "y", -1);
+        i = (int)reader.GetInteger(CONFIG_WINDOW_SECTION, "y", -1);
         if (i >= 0) {
             win[1] = i;
         }
-        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "w", -1);
+        i = (int)reader.GetInteger(CONFIG_WINDOW_SECTION, "w", -1);
         if (i >= 0) {
             win[2] = i;
         }
-        i = reader.GetInteger(CONFIG_WINDOW_SECTION, "h", -1);
+        i = (int)reader.GetInteger(CONFIG_WINDOW_SECTION, "h", -1);
         if (i >= 0) {
             win[3] = i;
         }
