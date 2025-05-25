@@ -129,12 +129,12 @@ static void set_icon(SDL_Window* window)
     SDL_FreeSurface(icon);
 }
 
-static void read_player_name_config(GameState *game)
+static void read_window_title_config(GameState *game)
 {
     INIReader reader(CONFIG_FILE);
     if (!reader.ParseError()) {
-        std::string toto = reader.Get(CONFIG_WINDOW_SECTION, "player_name", "");
-		memcpy(game->player_name_setting, toto.c_str(), toto.size() + 1);
+        std::string toto = reader.Get(CONFIG_WINDOW_SECTION, "window_title", "");
+		memcpy(game->window_title_setting, toto.c_str(), toto.size() + 1);
     }
 }
 
@@ -222,7 +222,7 @@ static void write_config(SDL_Window *window, GameState *game)
     ofs << "y=" << y << std::endl;
     ofs << "w=" << w << std::endl;
     ofs << "h=" << h << std::endl;
-    ofs << "player_name=" << game->player_name_setting << std::endl;
+    ofs << "window_title=" << game->window_title_setting << std::endl;
 
     ofs.close();
 }
@@ -285,7 +285,7 @@ static bool init_graphics(SDL_Window **window, SDL_GLContext *gl_context, GameSt
     //io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
     io.IniFilename = NULL;
     read_config();
-    read_player_name_config(game);
+    read_window_title_config(game);
 
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();

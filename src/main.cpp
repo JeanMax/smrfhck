@@ -175,7 +175,7 @@ static bool draw_unit_callback(void *node_value, void *data)
         return FALSE;
     }
 
-    float max_size = game->level->_2; // :|
+    float max_size = (float)game->level->_2; // :|
     draw(((float)u->pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
          ((float)u->pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
          setting);
@@ -299,8 +299,8 @@ inline static void draw_settings(GameState *game)
 
     ImGui::SameLine();
     ImGui::PushID(i++);
-    ImGui::InputTextWithHint("", "Player Name",
-                             game->player_name_setting,
+    ImGui::InputTextWithHint("", "Window Title",
+                             game->window_title_setting,
                              PLAYER_DATA_NAME_MAX);
     ImGui::PopID();
     ImGui::NewLine();
