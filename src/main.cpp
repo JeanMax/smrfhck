@@ -5,6 +5,7 @@
 #define NEXT_LEVEL_SETTING_STR            "Next Level"
 #define PREV_LEVEL_SETTING_STR            "Previous Level"
 #define PLAYER_SETTING_STR                "Player (it's you!)"
+#define MONSTER_SETTING_STR               "Monster"
 #define NPC_PRESET_SETTING_STR            "Npc/Monster Preset"
 #define LEVEL_CONNECTION_UP_SETTING_STR   "Level Connection Up"
 #define LEVEL_CONNECTION_DOWN_SETTING_STR "Level Connection Down"
@@ -26,6 +27,8 @@ std::map<const char *, Setting> g_settings {
             .color=ImColor(COLOR_RED_2, 0.8f), .size=0.f, .is_circle=0}},
     {PLAYER_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},
     {LEVEL_CONNECTION_UP_SETTING_STR, {
@@ -140,10 +143,51 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
 
 }
 
+static bool draw_unit_callback(void *node_value, void *data)
+{
+    GameState *game = (GameState *)data;
+    UnitAny *u = (UnitAny *)node_value;
+
+    Setting *setting;
+
+    if (!u->pPath) {
+        // LOG_INFO("Unit without Path: id=%d type=%d txt=%d",
+        //          u->dwUnitId, u->dwType, u->dwTxtFileNo);
+        // log_UnitAny(u);
+        return FALSE;
+    }
+
+    if (u->dwType <= 1) { //monster/npc
+        setting = &g_settings[MONSTER_SETTING_STR];
+        // TODO: scariness
+        // if (u->dwTxtFileNo < 734) { //super unique boss
+        //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
+        //              u->dwTxtFileNo, u->dwType, u->dwPosX, u->dwPosY);
+        // }
+    } else if (u->dwType == 2) {  //object
+        // TODO: chest / shrine
+        return FALSE;
+    } else { // ???
+        // setting = &g_settings[UNKNOWN_SETTING_STR];
+        // LOG_INFO("Unknown Unit: id=%d type=%d txt=%d",
+        //          u->dwUnitId, u->dwType, u->dwTxtFileNo);
+        // log_UnitAny(u);
+        return FALSE;
+    }
+
+    float max_size = game->level->_2; // :|
+    draw(((float)u->pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
+         ((float)u->pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
+         setting);
+
+    return FALSE;
+}
+
 inline static void draw_map(GameState *game)
 {
     // float max_size = (float)MAX(game->level->dwSizeX, game->level->dwSizeY);
     float max_size = (float)get_level_size(game) / 5.f;
+
     // draw_rect(0, 0,
     //           (float)game->level->dwSizeX / max_size,
     //           (float)game->level->dwSizeY / max_size,
@@ -165,13 +209,16 @@ inline static void draw_map(GameState *game)
         //               (float)r1->dwSizeXBig / 5.f / max_size,
         //               (float)r1->dwSizeYBig / 5.f / max_size,
         //               &g_settings[EXPLORED_AREAS_SETTING_STR].color); //room1
-        // }
+        // }  // this doesn't show much actually
     }
 
     for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pNext) {
         //2nd iterate so it's drawn over room2
         draw_presets(r2, game->level, max_size);
     }
+
+    game->level->_2 = (dword)max_size;  // erk, sorry
+    hiter(g_unit_table, draw_unit_callback, game);
 
     draw(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
          ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
@@ -386,6 +433,8 @@ static void game_refresher(void *data)
 
 int main(int, char**)
 {
+    int ret = EXIT_SUCCESS;
+
     redirect_output_to_file(LOG_FILE);
     LOG_INFO("\n\n%s *Starting smrfhck*", get_date_str());
 
@@ -396,8 +445,9 @@ int main(int, char**)
     game_thread.detach();
 
     if (!render_loop(frame_callback, (void *)&game)) {
-        return EXIT_FAILURE;
+        ret = EXIT_FAILURE;
     }
-    // destroy_game_state(&game); //who cares?
-    return EXIT_SUCCESS;
+
+    destroy_game_state(&game); //who cares?
+    return ret;
 }

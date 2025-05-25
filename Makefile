@@ -101,7 +101,6 @@ SUB_MAKE = make -C
 # try to be cross-platform
 UNAME_S = $(shell uname -s)
 ifeq ($(OS), Windows_NT)
-    AR = x86_64-w64-mingw32-gcc-ar
     CC = x86_64-w64-mingw32-gcc -static -static-libgcc
     CXX = x86_64-w64-mingw32-g++ -static -static-libgcc -static-libstdc++
     LDLIBS += -L extern/OpenGL/Binaries/ -lgdi32 -lopengl32 -limm32
