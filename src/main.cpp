@@ -5,7 +5,14 @@
 #define NEXT_LEVEL_SETTING_STR            "Next Level"
 #define PREV_LEVEL_SETTING_STR            "Previous Level"
 #define PLAYER_SETTING_STR                "Player (it's you!)"
-#define MONSTER_SETTING_STR               "Monster"
+#define MONSTER_ZERO_SETTING_STR          "Monster Zero"
+#define MONSTER_SUPER_SETTING_STR         "Monster Super"
+#define MONSTER_MINION_SETTING_STR        "Monster Minion"
+#define MONSTER_BOSS_SETTING_STR          "Monster Boss"
+#define MONSTER_CHAMP_SETTING_STR         "Monster Champ"
+#define MONSTER_NORMAL_SETTING_STR        "Monster Normal"
+#define MONSTER_DUNNO_SETTING_STR         "Monster Dunno"
+#define MONSTER_WEIRD_SETTING_STR         "Monster Weird"
 #define NPC_PRESET_SETTING_STR            "Npc/Monster Preset"
 #define LEVEL_CONNECTION_UP_SETTING_STR   "Level Connection Up"
 #define LEVEL_CONNECTION_DOWN_SETTING_STR "Level Connection Down"
@@ -27,7 +34,21 @@ std::map<const char *, Setting> g_settings {
             .color=ImColor(COLOR_RED_2, 0.8f), .size=0.f, .is_circle=0}},
     {PLAYER_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.007f, .is_circle=1}},
-    {MONSTER_SETTING_STR, {
+    {MONSTER_ZERO_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_SUPER_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_MINION_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_BOSS_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_CHAMP_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_NORMAL_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_DUNNO_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_WEIRD_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},
@@ -102,7 +123,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
     Setting *setting;
 
     for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pNext) {
-        if (pu->dwType == 1) { //monster/npc
+        if (pu->dwType == UNIT_MONSTER) { //monster/npc
             if (is_uninteresting_unit(pu->dwTxtFileNo)) {
                 continue;
             }
@@ -111,7 +132,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
             //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
             // }
-        } else if (pu->dwType == 2) {  //object
+        } else if (pu->dwType == UNIT_OBJECT) {
             if (is_waypoint(pu->dwTxtFileNo)) {
                 setting = &g_settings[WAYPOINT_SETTING_STR];
             } else if (is_quest(pu->dwTxtFileNo)) {
@@ -124,7 +145,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
                 // continue;
                 setting = &g_settings[BORING_SETTING_STR];
             }
-        } else if (pu->dwType == 5) {  //tiles
+        } else if (pu->dwType == UNIT_TILE) {
             if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
                 setting = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR];
             } else {
@@ -157,14 +178,55 @@ static bool draw_unit_callback(void *node_value, void *data)
         return FALSE;
     }
 
-    if (u->dwType <= 1) { //monster/npc
-        setting = &g_settings[MONSTER_SETTING_STR];
-        // TODO: scariness
-        // if (u->dwTxtFileNo < 734) { //super unique boss
-        //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
-        //              u->dwTxtFileNo, u->dwType, u->dwPosX, u->dwPosY);
-        // }
-    } else if (u->dwType == 2) {  //object
+    if (u->dwType == UNIT_PLAYER) {
+        //TODO
+        return FALSE;
+    } else if (u->dwType == UNIT_MONSTER) { //monster/npc
+        byte type_flag = u->pMonsterData->fType;
+        if (type_flag) {
+            LOG_DEBUG("Unknown ZBOUB type flag: type=%d txt=%d flag=%02hhx",
+                               u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+        }
+        if (!type_flag) {
+            setting = &g_settings[MONSTER_ZERO_SETTING_STR];
+        } else if (type_flag & MONSTER_SUPER) {
+            if ((type_flag & MONSTER_SUPER) != MONSTER_SUPER)  {
+                LOG_DEBUG("Unknown MONSTER_SUPER type flag: type=%d txt=%d flag=%02hhx",
+                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+            }
+            setting = &g_settings[MONSTER_SUPER_SETTING_STR];
+        } else if (type_flag & MONSTER_CHAMP) {
+            if ((type_flag & MONSTER_CHAMP) != MONSTER_CHAMP)  {
+                LOG_DEBUG("Unknown MONSTER_CHAMP type flag: type=%d txt=%d flag=%02hhx",
+                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+            }
+            setting = &g_settings[MONSTER_CHAMP_SETTING_STR];
+        } else if (type_flag & MONSTER_BOSS) {
+            if ((type_flag & MONSTER_BOSS) != MONSTER_BOSS)  {
+                LOG_DEBUG("Unknown MONSTER_BOSS type flag: type=%d txt=%d flag=%02hhx",
+                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+            }
+            setting = &g_settings[MONSTER_BOSS_SETTING_STR];
+        } else if (type_flag & MONSTER_MINION) {
+            if ((type_flag & MONSTER_MINION) != MONSTER_MINION)  {
+                LOG_DEBUG("Unknown MONSTER_MINION type flag: type=%d txt=%d flag=%02hhx",
+                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+            }
+            setting = &g_settings[MONSTER_MINION_SETTING_STR];
+        } else if (type_flag & MONSTER_NORMAL) {
+            if ((type_flag & MONSTER_NORMAL) != MONSTER_NORMAL)  {
+                LOG_DEBUG("Unknown MONSTER_NORMAL type flag: type=%d txt=%d flag=%02hhx",
+                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+            }
+            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+        } else if (type_flag & (MONSTER_POSSESSED | MONSTER_GHOSTLY | MONSTER_MULTISHOT)) {
+            setting = &g_settings[MONSTER_DUNNO_SETTING_STR];
+        } else {
+            setting = &g_settings[MONSTER_WEIRD_SETTING_STR];
+            LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
+                      u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+        }
+    } else if (u->dwType == UNIT_OBJECT) {
         // TODO: chest / shrine
         return FALSE;
     } else { // ???
