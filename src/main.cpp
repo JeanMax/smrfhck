@@ -481,15 +481,20 @@ static const char *get_date_str()
 static void game_refresher(void *data)
 {
     GameState *game = (GameState *)data;
+    std::chrono::duration fail_delay = std::chrono::milliseconds(1000);
 #ifdef NDEBUG
     std::chrono::duration frame_delay = std::chrono::milliseconds(500);
 #else
-    std::chrono::duration frame_delay = std::chrono::milliseconds(111);
+    std::chrono::duration frame_delay = std::chrono::milliseconds(100);
     // ideally you'd want 9fps, so less than 111ms sleep
 #endif
+
     while (42) {
-        update_game_state(game);
-        std::this_thread::sleep_for(frame_delay);
+        if (!update_game_state(game)) {
+            std::this_thread::sleep_for(fail_delay);
+        } else {
+            std::this_thread::sleep_for(frame_delay);
+        }
     }
 }
 
