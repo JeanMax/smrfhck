@@ -1,18 +1,16 @@
 #include "smrfhck.hpp"
 
 #define CURRENT_LEVEL_SETTING_STR         "Current Level"
-#define EXPLORED_AREAS_SETTING_STR         "Explored Areas"
+#define EXPLORED_AREAS_SETTING_STR        "Explored Areas"
 #define NEXT_LEVEL_SETTING_STR            "Next Level"
 #define PREV_LEVEL_SETTING_STR            "Previous Level"
 #define PLAYER_SETTING_STR                "Player (it's you!)"
-#define MONSTER_ZERO_SETTING_STR          "Monster Zero"
+#define OTHER_PLAYERS_SETTING_STR         "Other Players"
 #define MONSTER_SUPER_SETTING_STR         "Monster Super"
 #define MONSTER_MINION_SETTING_STR        "Monster Minion"
 #define MONSTER_BOSS_SETTING_STR          "Monster Boss"
 #define MONSTER_CHAMP_SETTING_STR         "Monster Champ"
 #define MONSTER_NORMAL_SETTING_STR        "Monster Normal"
-#define MONSTER_DUNNO_SETTING_STR         "Monster Dunno"
-#define MONSTER_WEIRD_SETTING_STR         "Monster Weird"
 #define NPC_PRESET_SETTING_STR            "Npc/Monster Preset"
 #define LEVEL_CONNECTION_UP_SETTING_STR   "Level Connection Up"
 #define LEVEL_CONNECTION_DOWN_SETTING_STR "Level Connection Down"
@@ -22,6 +20,8 @@
 #define QUEST_SETTING_STR                 "Quest"
 #define UNKNOWN_SETTING_STR               "Unknown"
 #define BORING_SETTING_STR                "Not Interesting"
+
+std::atomic_bool exit_now = false;
 
 std::map<const char *, Setting> g_settings {
     {CURRENT_LEVEL_SETTING_STR, {
@@ -34,21 +34,17 @@ std::map<const char *, Setting> g_settings {
             .color=ImColor(COLOR_RED_2, 0.8f), .size=0.f, .is_circle=0}},
     {PLAYER_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_1, 0.8f), .size=0.007f, .is_circle=1}},
-    {MONSTER_ZERO_SETTING_STR, {
+    {OTHER_PLAYERS_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {MONSTER_SUPER_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
-    {MONSTER_MINION_SETTING_STR, {
-            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {MONSTER_BOSS_SETTING_STR, {
+            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
+    {MONSTER_MINION_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {MONSTER_CHAMP_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {MONSTER_NORMAL_SETTING_STR, {
-            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
-    {MONSTER_DUNNO_SETTING_STR, {
-            .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
-    {MONSTER_WEIRD_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
             .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},
@@ -68,7 +64,7 @@ std::map<const char *, Setting> g_settings {
             .color=ImColor(COLOR_WHITE_1, 0.8f), .size=0.025f, .is_circle=0}},
     {BORING_SETTING_STR, {
             .color=ImColor(COLOR_WHITE_1, 0.1f), .size=0.025f, .is_circle=0}},
-};
+};  //TODO: add cool default colors / shape / size
 
 
 static dword get_level_size(GameState *game)
@@ -179,16 +175,13 @@ static bool draw_unit_callback(void *node_value, void *data)
     }
 
     if (u->dwType == UNIT_PLAYER) {
-        //TODO
-        return FALSE;
+        //TODO: handle players (and merc?)
+        setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
+
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
         byte type_flag = u->pMonsterData->fType;
-        if (type_flag) {
-            LOG_DEBUG("Unknown ZBOUB type flag: type=%d txt=%d flag=%02hhx",
-                               u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
-        }
         if (!type_flag) {
-            setting = &g_settings[MONSTER_ZERO_SETTING_STR];
+            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
         } else if (type_flag & MONSTER_SUPER) {
             if ((type_flag & MONSTER_SUPER) != MONSTER_SUPER)  {
                 LOG_DEBUG("Unknown MONSTER_SUPER type flag: type=%d txt=%d flag=%02hhx",
@@ -213,23 +206,26 @@ static bool draw_unit_callback(void *node_value, void *data)
                           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
             }
             setting = &g_settings[MONSTER_MINION_SETTING_STR];
-        } else if (type_flag & MONSTER_NORMAL) {
-            if ((type_flag & MONSTER_NORMAL) != MONSTER_NORMAL)  {
-                LOG_DEBUG("Unknown MONSTER_NORMAL type flag: type=%d txt=%d flag=%02hhx",
-                          u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
-            }
-            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
         } else if (type_flag & (MONSTER_POSSESSED | MONSTER_GHOSTLY | MONSTER_MULTISHOT)) {
-            setting = &g_settings[MONSTER_DUNNO_SETTING_STR];
-        } else {
-            setting = &g_settings[MONSTER_WEIRD_SETTING_STR];
-            LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
+            setting = &g_settings[MONSTER_BOSS_SETTING_STR];
+            LOG_DEBUG("Unknown MONSTER (possessed / ghostly / multishot) type flag: type=%d txt=%d flag=%02hhx",
                       u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+        // } else if (type_flag & MONSTER_NORMAL) {
+        //     if ((type_flag & MONSTER_NORMAL) != MONSTER_NORMAL)  {
+        //         LOG_DEBUG("Unknown MONSTER_NORMAL type flag: type=%d txt=%d flag=%02hhx",
+        //                   u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
+        //     }
+        //     setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+        } else {
+            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+            // LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
+            //           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         }
+        //TODO: handle boring monsters
     } else if (u->dwType == UNIT_OBJECT) {
         // TODO: chest / shrine
         return FALSE;
-    } else { // ???
+    } else {
         // setting = &g_settings[UNKNOWN_SETTING_STR];
         // LOG_INFO("Unknown Unit: id=%d type=%d txt=%d",
         //          u->dwUnitId, u->dwType, u->dwTxtFileNo);
@@ -489,13 +485,14 @@ static void game_refresher(void *data)
     // ideally you'd want 9fps, so less than 111ms sleep
 #endif
 
-    while (42) {
+    while (!exit_now) {
         if (!update_game_state(game)) {
             std::this_thread::sleep_for(fail_delay);
         } else {
             std::this_thread::sleep_for(frame_delay);
         }
     }
+    exit_now = false;
 }
 
 int main(int, char**)
@@ -515,6 +512,14 @@ int main(int, char**)
         ret = EXIT_FAILURE;
     }
 
-    destroy_game_state(&game); //who cares?
+    exit_now = true;
+#ifdef NDEBUG
+    while (exit_now) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    destroy_game_state(&game);
+    // this is basically to make sure we didn't leak any memory
+#endif
+
     return ret;
 }

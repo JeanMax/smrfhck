@@ -24,7 +24,7 @@ for i in "" dev; do
          -mask ICONGROUP,IDR_MAINFRAME,MAINICON
     cp "$exe" "$WINE_PREFIX"
 done
-make san
+bear -- make san
 
 # MOUNT_DIR=$(mktemp -d)
 # WIN_PART=/dev/sda4

@@ -195,6 +195,11 @@ test: all
 # build sdl
 sdl: $(SDL_LIB)
 
+# show all TODO in project
+todo:
+	+$(SUB_MAKE) $(LSMRF_DIR) todo
+	grep --color=auto -riIn --exclude-dir .git --exclude-dir extern --exclude Makefile todo .
+
 
 ##
 ## PRIVATE RULES
@@ -231,5 +236,5 @@ endif # otherwise assume there's a system install
 -include $(DEP)
 
 # just to avoid conflicts between rules and files/folders names
-.PHONY: all, dev, san, mecry, $(PROJECT), sdl, \
+.PHONY: all, dev, san, mecry, $(PROJECT), sdl, todo, \
 clean, fclean, mrproper, re, test, testdev, testsan
