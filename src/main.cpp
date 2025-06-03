@@ -410,7 +410,7 @@ inline static void frame_callback(void *data)
     if (ImGui::Begin("smrfhck")) {
         pthread_mutex_lock(&game->mutex);
         if (!game->level) {
-            ImGui::Text("%s", *game->status ? game->status : "Searching for D2R.exe...");
+            ImGui::Text("%s", *game->status ? game->status : "Loading...");
         } else {
             draw_map(game);
         }
@@ -458,7 +458,7 @@ inline static void frame_callback(void *data)
 
 static bool redirect_output_to_file(const char *filename)
 {
-    int fd = open(filename, O_CREAT | O_RDWR | O_APPEND, 00644);
+    int fd = open(filename, O_CREAT | O_RDWR, 00644);
     if (fd < 0) {
         LOG_ERROR("Can't redirect output to logfile (will you ever read this?!)");
         return FALSE;
