@@ -35,9 +35,11 @@ SDL_LIB = $(SDL_BUILD_DIR)/libSDL2.la
 INI_DIR = extern/inih
 
 # file-names of the sources
-SRC_NAME = main.cpp graphics.cpp \
-           imgui_impl_sdl2.cpp imgui_impl_opengl3.cpp \
-           imgui.cpp imgui_draw.cpp imgui_tables.cpp imgui_widgets.cpp # imgui_demo.cpp
+SRC_NAME = main.cpp  settings.cpp  \
+		gui/graphics.cpp  gui/draw.cpp  gui/config.cpp  gui/icon.cpp  \
+		win/menu.cpp  win/debug.cpp  win/map.cpp  \
+		imgui_impl_sdl2.cpp  imgui_impl_opengl3.cpp  \
+		imgui.cpp  imgui_draw.cpp  imgui_tables.cpp  imgui_widgets.cpp # imgui_demo.cpp
 
 # folder-names of the sources
 SRC_PATH = src $(IMGUI_DIR) $(IMGUI_DIR)/backends
