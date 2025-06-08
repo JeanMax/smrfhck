@@ -18,12 +18,12 @@ static dword get_level_size(GameState *game)
 static void draw_level_connection(GameState *game, float max_size)
 {
     Level *lvl;
-    dword act = act_from_area(game->level->dwLevelNo);
-    for (int i = 0; i < MAX_AREA; i++) {
+    dword act = LEVEL_INFO[game->level->dwLevelNo].act;
+    for (int i = 0; i < MAX_LEVEL; i++) {
         lvl = game->all_levels[i];
         if (!lvl
             || lvl->dwLevelNo == game->level->dwLevelNo
-            || act_from_area(lvl->dwLevelNo) != act) {
+            || LEVEL_INFO[game->level->dwLevelNo].act != act) {
             continue;
         }
 

@@ -111,6 +111,7 @@ int main(int, char**)
     int ret = EXIT_SUCCESS;
 
     redirect_output_to_file(LOG_FILE);
+    //TODO: log current version
     LOG_INFO("\n\n%s *Starting smrfhck*", get_date_str());
 
     GameState game;
