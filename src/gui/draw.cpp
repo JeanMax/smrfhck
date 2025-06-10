@@ -6,7 +6,6 @@
 
 void draw_circle(float x, float y, float radius, ImColor *color)
 {
-    //TODO: optimize
     ImVec2 vMin = ImGui::GetWindowContentRegionMin();
     ImVec2 vMax = ImGui::GetWindowContentRegionMax();
     vMin.x += ImGui::GetWindowPos().x;
@@ -35,7 +34,6 @@ void draw_circle(float x, float y, float radius, ImColor *color)
 
 void draw_rect(float x, float y, float w, float h, ImColor *color)
 {
-    //TODO: optimize
     ImVec2 vMin = ImGui::GetWindowContentRegionMin();
     ImVec2 vMax = ImGui::GetWindowContentRegionMax();
     vMin.x += ImGui::GetWindowPos().x;

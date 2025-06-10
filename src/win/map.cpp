@@ -85,7 +85,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             if (is_waypoint(info)) {
                 setting = &g_settings[WAYPOINT_SETTING_STR];
             } else if (is_quest(info)) {
-                setting = &g_settings[QUEST_SETTING_STR];
+                setting = &g_settings[QUEST_SETTING_STR]; //TODO: use another color for chest (non quest ones...)
             } else if (is_shrine(info)) {
                 setting = &g_settings[SHRINE_SETTING_STR];  //TODO: some shrines don't have preset :/
             } else if (is_portal(info)) {
@@ -133,8 +133,11 @@ static bool draw_unit_callback(void *node_value, void *data)
         return FALSE;
     }
 
+    if (u->wIsCorpse == 1) {
+        return FALSE; //dead
+    }
+
     if (u->dwType == UNIT_PLAYER) {
-        //TODO: handle players (and merc?)
         setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
 
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
@@ -199,7 +202,6 @@ static bool draw_unit_callback(void *node_value, void *data)
             // LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
             //           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         }
-        //TODO: handle boring monsters
     } else if (u->dwType == UNIT_OBJECT) {
         // TODO: chest / shrine
         return FALSE;
