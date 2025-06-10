@@ -37,25 +37,29 @@ void draw_debug(GameState *game)
         ImGui::Text("%d    %d", pu->dwType, pu->dwTxtFileNo);
         ImGui::SameLine(80);
 
-        if (pu->dwType == 1) { //monster/npc
+        if (pu->dwType == UNIT_MONSTER) { //monster/npc
             // if (is_uninteresting_unit(pu->dwTxtFileNo)) {
             //     continue;
             // }
             ImGui::Text(NPC_PRESET_SETTING_STR);
-        } else if (pu->dwType == 2) {  //object
-            if (is_waypoint(pu->dwTxtFileNo)) {
+        } else if (pu->dwType == UNIT_OBJECT) {
+            const ObjectInfo *info = &OBJECT_INFO[pu->dwTxtFileNo];
+
+            if (is_waypoint(info)) {
                 ImGui::Text(WAYPOINT_SETTING_STR);
-            } else if (is_quest(pu->dwTxtFileNo)) {
+            } else if (is_quest(info)) {
                 ImGui::Text(QUEST_SETTING_STR);
-            } else if (is_shrine(pu->dwTxtFileNo)) {
+            } else if (is_portal(info)) {
+                ImGui::Text("Portal (" QUEST_SETTING_STR ")");
+            } else if (is_shrine(info)) {
                 ImGui::Text(SHRINE_SETTING_STR);
-            } else if (is_transit(pu->dwTxtFileNo)) {
+            } else if (is_transit(info)) {
                 ImGui::Text(WEIRD_CONNECTION_SETTING_STR);
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
                 // continue;
                 ImGui::Text(BORING_SETTING_STR);
             }
-        } else if (pu->dwType == 5) {  //tiles
+        } else if (pu->dwType == UNIT_TILE) {
             if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
                 ImGui::Text(LEVEL_CONNECTION_UP_SETTING_STR);
             } else {

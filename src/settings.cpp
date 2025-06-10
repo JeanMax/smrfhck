@@ -25,13 +25,13 @@ std::map<std::string, Setting> g_settings {
     {MONSTER_NORMAL_SETTING_STR, {
             .color=ImColor(COLOR_YELLOW_2, 0.8f), .size=0.007f, .is_circle=1}},
     {NPC_PRESET_SETTING_STR, {
-            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},
+            .color=ImColor(COLOR_RED_1, 0.8f), .size=0.005f, .is_circle=1}},  //TODO: rename to "super zone"
     {LEVEL_CONNECTION_UP_SETTING_STR, {
             .color=ImColor(COLOR_GREEN_2, 0.8f), .size=0.025f, .is_circle=0}},
     {LEVEL_CONNECTION_DOWN_SETTING_STR, {
             .color=ImColor(COLOR_GREEN_1, 0.8f), .size=0.025f, .is_circle=0}},
     {WEIRD_CONNECTION_SETTING_STR, {
-            .color=ImColor(COLOR_CYAN_1, 0.8f), .size=0.025f, .is_circle=0}},
+            .color=ImColor(COLOR_CYAN_1, 0.8f), .size=0.025f, .is_circle=0}},  //TODO: rename to "boss zone"
     {WAYPOINT_SETTING_STR, {
             .color=ImColor(COLOR_MAGENTA_1, 0.8f), .size=0.025f, .is_circle=0}},
     {SHRINE_SETTING_STR, {

@@ -23,7 +23,7 @@ static void draw_level_connection(GameState *game, float max_size)
         lvl = game->all_levels[i];
         if (!lvl
             || lvl->dwLevelNo == game->level->dwLevelNo
-            || LEVEL_INFO[game->level->dwLevelNo].act != act) {
+            || LEVEL_INFO[lvl->dwLevelNo].act != act) {
             continue;
         }
 
@@ -53,45 +53,68 @@ static void draw_level_connection(GameState *game, float max_size)
 static void draw_presets(Room2 *r2, Level *level, float max_size)
 {
     Setting *setting;
-
     for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pNext) {
         if (pu->dwType == UNIT_MONSTER) { //monster/npc
-            if (is_uninteresting_unit(pu->dwTxtFileNo)) {
+            const MonsterInfo *info = NULL;
+            const SuperInfo *super_info = NULL;
+
+            if (pu->dwTxtFileNo >= MAX_MONSTER + MAX_SUPER) {
+                setting = &g_settings[WEIRD_CONNECTION_SETTING_STR]; // boss / champ "zone"
+                if (is_weird_preset_monster(pu->dwTxtFileNo)) {
+                    continue;
+                }
+            } else if (pu->dwTxtFileNo >= MAX_MONSTER) {
+                super_info = &SUPER_INFO[pu->dwTxtFileNo - MAX_MONSTER];
+                info = &MONSTER_INFO[super_info->monster];
+                setting = &g_settings[NPC_PRESET_SETTING_STR]; //super
+            } else {
+                info = &MONSTER_INFO[pu->dwTxtFileNo];
+                setting = &g_settings[NPC_PRESET_SETTING_STR]; //normal (probably weird)
+            }
+
+            if (info && (!is_a_threat(info)
+                         || is_npc(info)
+                         || info->id == MON_SARCOPHAGUS
+                         || info->id == MON_EVILHUT)) {
                 continue;
             }
-            setting = &g_settings[NPC_PRESET_SETTING_STR];
-            // if (pu->dwTxtFileNo < 734) { //super unique boss
-            //     LOG_INFO("preset: id=%d type=%d (%d, %d)",
-            //              pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
-            // }
+
         } else if (pu->dwType == UNIT_OBJECT) {
-            if (is_waypoint(pu->dwTxtFileNo)) {
+            const ObjectInfo *info = &OBJECT_INFO[pu->dwTxtFileNo];
+
+            if (is_waypoint(info)) {
                 setting = &g_settings[WAYPOINT_SETTING_STR];
-            } else if (is_quest(pu->dwTxtFileNo)) {
+            } else if (is_quest(info)) {
                 setting = &g_settings[QUEST_SETTING_STR];
-            } else if (is_shrine(pu->dwTxtFileNo)) {
-                setting = &g_settings[SHRINE_SETTING_STR];
-            } else if (is_transit(pu->dwTxtFileNo)) {
+            } else if (is_shrine(info)) {
+                setting = &g_settings[SHRINE_SETTING_STR];  //TODO: some shrines don't have preset :/
+            } else if (is_portal(info)) {
+                setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
+            } else if (is_transit(info)) {
                 setting = &g_settings[WEIRD_CONNECTION_SETTING_STR];
-            } else { //!is_interesting_preset(pu->dwTxtFileNo)
+            } else {
                 // continue;
                 setting = &g_settings[BORING_SETTING_STR];
             }
+
         } else if (pu->dwType == UNIT_TILE) {
             if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
                 setting = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR];
             } else {
                 setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
             }
+
         } else { // ???
-            setting = &g_settings[UNKNOWN_SETTING_STR];
+            setting = &g_settings[UNKNOWN_SETTING_STR];  //TODO: just use boring setting?
             LOG_INFO("preset: id=%d type=%d (%d, %d)",
                      pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
 
         }
+
         draw(((float)r2->dwPosX - (float)level->dwPosX + (float)pu->dwPosX / 5.f) / max_size,
              ((float)r2->dwPosY - (float)level->dwPosY + (float)pu->dwPosY / 5.f) / max_size,
              setting);
+        //TODO: for objects, you actually have their sizes
     }
 
 }
@@ -115,8 +138,27 @@ static bool draw_unit_callback(void *node_value, void *data)
         setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
 
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
+        const MonsterInfo *info = NULL;
+        const SuperInfo *super_info = NULL;
+
+        //TODO: add a fun / macro to handle this
+        if (u->dwTxtFileNo >= MAX_MONSTER + MAX_SUPER) {
+             // boss / champ "zone"
+        } else if (u->dwTxtFileNo >= MAX_MONSTER) {
+            super_info = &SUPER_INFO[u->dwTxtFileNo - MAX_MONSTER];
+            info = &MONSTER_INFO[super_info->monster];
+        } else {
+            info = &MONSTER_INFO[u->dwTxtFileNo];
+        }
+
         byte type_flag = u->pMonsterData->fType;
-        if (!type_flag) {
+        if (info && is_npc(info)) {
+            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+        } else if (info && is_ally(info)) {
+            setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
+        } else if (info && !is_a_threat(info)) {
+            setting = &g_settings[BORING_SETTING_STR];
+        } else if (!type_flag) {
             setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
         } else if (type_flag & MONSTER_SUPER) {
             if ((type_flag & MONSTER_SUPER) != MONSTER_SUPER)  {
