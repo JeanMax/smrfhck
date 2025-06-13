@@ -52,19 +52,19 @@ void read_config()
     ifs.close();
     INIReader reader(CONFIG_FILE);
     if (!reader.ParseError()) {
-        for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-            std::string color = reader.Get(CONFIG_COLOR_SECTION, it->first, "");
+        for (Setting *set = g_settings; set - g_settings < MAX_SETTINGS; set++) {
+           std::string color = reader.Get(CONFIG_COLOR_SECTION, set->name, "");
             if (color.size()) {
                 //Get+stoll instead of GetInt to avoid overflow
-                g_settings[it->first].color = ImColor((ImU32)std::stoll(color));
+                set->color = ImColor((ImU32)std::stoll(color));
             }
-            float size = reader.GetFloat(CONFIG_SIZE_SECTION, it->first, -1.f);
+            float size = reader.GetFloat(CONFIG_SIZE_SECTION, set->name, -1.f);
             if (size >= 0) {
-                g_settings[it->first].size = size;
+                set->size = size;
             }
-            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, it->first, -1);
+            long is_circle = reader.GetInteger(CONFIG_SHAPE_SECTION, set->name, -1);
             if (is_circle >= 0) {
-                g_settings[it->first].is_circle = is_circle;
+                set->is_circle = is_circle;
             }
         }
     }
@@ -77,18 +77,18 @@ void write_config(SDL_Window *window, GameState *game)
 
     ofs << config_content
         << "[" << CONFIG_COLOR_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.color << std::endl;
+    for (Setting *set = g_settings; set - g_settings < MAX_SETTINGS; set++) {
+        ofs << set->name << "=" << set->color << std::endl;
     }
     ofs << std::endl
         << "[" << CONFIG_SIZE_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.size << std::endl;
+    for (Setting *set = g_settings; set - g_settings < MAX_SETTINGS; set++) {
+        ofs << set->name << "=" << set->size << std::endl;
     }
     ofs << std::endl
         << "[" << CONFIG_SHAPE_SECTION << "]" << std::endl;
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ofs << it->first << "=" << it->second.is_circle << std::endl;
+    for (Setting *set = g_settings; set - g_settings < MAX_SETTINGS; set++) {
+        ofs << set->name << "=" << set->is_circle << std::endl;
     }
 
     int x, y, w, h;

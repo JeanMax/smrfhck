@@ -26,24 +26,24 @@ void draw_menu(GameState *game)
     ImGui::Text("Circle?");
 
     // ImGui::PushItemWidth(ImGui::GetFontSize() * -12);
-    for (auto it = g_settings.begin(); it != g_settings.end(); ++it) {
-        ImGui::ColorEdit4(it->first.c_str(),
-                          (float *)&it->second.color,
+    for (Setting *set = g_settings; set - g_settings < MAX_SETTINGS; set++) {
+        ImGui::ColorEdit4(set->name,
+                          (float *)&set->color,
                           ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         ImGui::SameLine();
-        ImGui::Text("%s", it->first.c_str());
-        if (strcmp(it->first.c_str(), CURRENT_LEVEL_SETTING_STR)
-                && strcmp(it->first.c_str(), PREV_LEVEL_SETTING_STR)
-                && strcmp(it->first.c_str(), NEXT_LEVEL_SETTING_STR)) { // those are just rect
+        ImGui::Text("%s", set->name);
+        SettingId id = (SettingId)(set - g_settings);
+        if (id != EXPLORED_AREAS_SETTING && id != CURRENT_LEVEL_SETTING
+            && id != NEXT_LEVEL_SETTING && id != PREV_LEVEL_SETTING) { // those are just rect
             ImGui::SameLine(200);
             ImGui::PushItemWidth(90);
             ImGui::PushID(i++);
-            ImGui::InputFloat("", &it->second.size, 0.001f, 0.1f, "%.3f");
+            ImGui::InputFloat("", &set->size, 0.001f, 0.1f, "%.3f");
             ImGui::PopID();
 
             ImGui::SameLine();
             ImGui::PushID(i++);
-            ImGui::Checkbox("", &it->second.is_circle);
+            ImGui::Checkbox("", &set->is_circle);
             ImGui::PopID();
         }
     }

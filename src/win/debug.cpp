@@ -1,4 +1,5 @@
-#include <imgui_internal.h>  // hypotf
+#include <imgui_internal.h> // hypotf
+#include <map>
 
 #include "win/win.hpp"
 #include "settings.hpp"
@@ -133,14 +134,14 @@ static void draw_preset_debug(GameState *game)
             const SuperInfo *super_info = NULL;
 
             if (pu->dwTxtFileNo >= MAX_MONSTER + MAX_SUPER) {
-                ImGui::Text(WEIRD_CONNECTION_SETTING_STR); // boss / champ "zone"
+              ImGui::Text(BOSS_ZONE_SETTING_STR " (weird)"); // boss / champ "zone"
             } else if (pu->dwTxtFileNo >= MAX_MONSTER) {
                 super_info = &SUPER_INFO[pu->dwTxtFileNo - MAX_MONSTER];
                 info = &MONSTER_INFO[super_info->monster];
-                ImGui::Text(NPC_PRESET_SETTING_STR); //super
+                ImGui::Text(BOSS_ZONE_SETTING_STR " (super)"); //super
             } else {
                 info = &MONSTER_INFO[pu->dwTxtFileNo];
-                ImGui::Text(NPC_PRESET_SETTING_STR); //normal (probably weird)
+                ImGui::Text(BOSS_ZONE_SETTING_STR); //normal (probably weird)
             }
 
             ImGui::SameLine(NAME_OFFSET);
@@ -166,7 +167,7 @@ static void draw_preset_debug(GameState *game)
             } else if (is_portal(info)) {
                 ImGui::Text("Portal (" QUEST_SETTING_STR ")");
             } else if (is_transit(info)) {
-                ImGui::Text(WEIRD_CONNECTION_SETTING_STR);
+                ImGui::Text("TRANSIT: shouldn't happen");
             } else { //!is_interesting_preset(pu->dwTxtFileNo)
                 // continue;
                 ImGui::Text(BORING_SETTING_STR);
@@ -180,15 +181,15 @@ static void draw_preset_debug(GameState *game)
             const UniqueTileInfo *info = &UNIQUE_TILE_INFO[_info->uid];
 
             if (is_backward_tile(info)) { //probably not what you're searching for
-                ImGui::Text(LEVEL_CONNECTION_UP_SETTING_STR);
+                ImGui::Text(ENTRANCE_UP_SETTING_STR);
             } else {
-                ImGui::Text(LEVEL_CONNECTION_DOWN_SETTING_STR);
+                ImGui::Text(ENTRANCE_DOWN_SETTING_STR);
             }
 
             ImGui::SameLine(NAME_OFFSET);
             ImGui::Text("%s (%d)", info->name, info->notUniqueId);
         } else { // ???
-            ImGui::Text(UNKNOWN_SETTING_STR);
+            ImGui::Text("DUNNO");
         }
     }
 }

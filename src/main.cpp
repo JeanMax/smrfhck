@@ -31,7 +31,7 @@ inline static void frame_callback(void *data)
 {
     GameState *game = (GameState *)data;
 
-    ImGui::SetNextWindowPos(ImVec2(10, 25),
+    ImGui::SetNextWindowPos(ImVec2(10, 25), //TODO: adjust default windows position
                             ImGuiCond_FirstUseEver);
     ImGui::SetNextWindowSize(ImVec2(WINDOW_WIDTH - 20, WINDOW_HEIGHT - 35),
                              ImGuiCond_FirstUseEver);

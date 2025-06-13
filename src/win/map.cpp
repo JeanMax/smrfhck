@@ -28,8 +28,8 @@ static void draw_level_connection(GameState *game, float max_size)
         }
 
         ImColor *color = &g_settings[lvl->dwLevelNo > game->level->dwLevelNo ?
-                                     NEXT_LEVEL_SETTING_STR
-                                     : PREV_LEVEL_SETTING_STR].color;
+                                     NEXT_LEVEL_SETTING
+                                     : PREV_LEVEL_SETTING].color;
         if (lvl->pRoom2First) {
             for (Room2 *r = lvl->pRoom2First; r; r = r->pNext) {
                 draw_rect(((float)r->dwPosX - (float)game->level->dwPosX) / max_size,
@@ -59,17 +59,17 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             const SuperInfo *super_info = NULL;
 
             if (pu->dwTxtFileNo >= MAX_MONSTER + MAX_SUPER) {
-                setting = &g_settings[WEIRD_CONNECTION_SETTING_STR]; // boss / champ "zone"
+                setting = &g_settings[BOSS_ZONE_SETTING]; // boss / champ "zone"
                 if (is_weird_preset_monster(pu->dwTxtFileNo)) {
                     continue;
                 }
             } else if (pu->dwTxtFileNo >= MAX_MONSTER) {
                 super_info = &SUPER_INFO[pu->dwTxtFileNo - MAX_MONSTER];
                 info = &MONSTER_INFO[super_info->monster];
-                setting = &g_settings[NPC_PRESET_SETTING_STR]; //super
+                setting = &g_settings[BOSS_ZONE_SETTING]; //super
             } else {
                 info = &MONSTER_INFO[pu->dwTxtFileNo];
-                setting = &g_settings[NPC_PRESET_SETTING_STR]; //normal (probably weird)
+                setting = &g_settings[BOSS_ZONE_SETTING]; //normal (probably weird)
             }
 
             if (info && (!is_a_threat(info)
@@ -83,18 +83,19 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             const ObjectInfo *info = &OBJECT_INFO[pu->dwTxtFileNo];
 
             if (is_waypoint(info)) {
-                setting = &g_settings[WAYPOINT_SETTING_STR];
+                setting = &g_settings[WAYPOINT_SETTING];
             } else if (is_quest(info)) {
-                setting = &g_settings[QUEST_SETTING_STR]; //TODO: use another color for chest (non quest ones...)
+                setting = &g_settings[QUEST_SETTING]; //TODO: use another color for chest (non quest ones...)
             } else if (is_shrine(info)) {
-                setting = &g_settings[SHRINE_SETTING_STR];  //TODO: some shrines don't have preset :/
+                setting = &g_settings[SHRINE_SETTING];  //TODO: some shrines don't have preset :/
             } else if (is_portal(info)) {
-                setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
+                setting = &g_settings[ENTRANCE_DOWN_SETTING];
             } else if (is_transit(info)) {
-                setting = &g_settings[WEIRD_CONNECTION_SETTING_STR];
+                LOG_ERROR("This shouldn't happen: is_transit()");
+                setting = &g_settings[ENTRANCE_UP_SETTING];
             } else {
                 // continue;
-                setting = &g_settings[BORING_SETTING_STR];
+                setting = &g_settings[BORING_SETTING];
             }
 
         } else if (pu->dwType == UNIT_TILE) {
@@ -102,15 +103,15 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             const UniqueTileInfo *info = &UNIQUE_TILE_INFO[_info->uid];
 
             if (is_backward_tile(info)) { //probably not what you're searching for
-                setting = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR];
+                setting = &g_settings[ENTRANCE_UP_SETTING];
             } else {
-                setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
+                setting = &g_settings[ENTRANCE_DOWN_SETTING];
             }
 
         } else { // ???
-            setting = &g_settings[UNKNOWN_SETTING_STR];  //TODO: just use boring setting?
-            LOG_INFO("preset: id=%d type=%d (%d, %d)",
-                     pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
+            setting = &g_settings[BORING_SETTING];
+            LOG_WARNING("Unknown preset: id=%d type=%d (%d, %d)",
+                        pu->dwTxtFileNo, pu->dwType, pu->dwPosX, pu->dwPosY);
 
         }
 
@@ -141,7 +142,7 @@ static bool draw_unit_callback(void *node_value, void *data)
     }
 
     if (u->dwType == UNIT_PLAYER) {
-        setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
+        setting = &g_settings[OTHER_PLAYERS_SETTING];
 
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
         const MonsterInfo *info = NULL;
@@ -159,39 +160,39 @@ static bool draw_unit_callback(void *node_value, void *data)
 
         byte type_flag = u->pMonsterData->fType;
         if (info && is_npc(info)) {
-            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+            setting = &g_settings[MONSTER_NORMAL_SETTING];
         } else if (info && is_ally(info)) {
-            setting = &g_settings[OTHER_PLAYERS_SETTING_STR];
+            setting = &g_settings[OTHER_PLAYERS_SETTING];
         } else if (info && !is_a_threat(info)) {
-            setting = &g_settings[BORING_SETTING_STR];
+            setting = &g_settings[BORING_SETTING];
         } else if (!type_flag) {
-            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+            setting = &g_settings[MONSTER_NORMAL_SETTING];
         } else if (type_flag & MONSTER_SUPER) {
             if ((type_flag & MONSTER_SUPER) != MONSTER_SUPER)  {
                 LOG_DEBUG("Unknown MONSTER_SUPER type flag: type=%d txt=%d flag=%02hhx",
                           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
             }
-            setting = &g_settings[MONSTER_SUPER_SETTING_STR];
+            setting = &g_settings[MONSTER_SUPER_SETTING];
         } else if (type_flag & MONSTER_CHAMP) {
             if ((type_flag & MONSTER_CHAMP) != MONSTER_CHAMP)  {
                 LOG_DEBUG("Unknown MONSTER_CHAMP type flag: type=%d txt=%d flag=%02hhx",
                           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
             }
-            setting = &g_settings[MONSTER_CHAMP_SETTING_STR];
+            setting = &g_settings[MONSTER_CHAMP_SETTING];
         } else if (type_flag & MONSTER_BOSS) {
             if ((type_flag & MONSTER_BOSS) != MONSTER_BOSS)  {
                 LOG_DEBUG("Unknown MONSTER_BOSS type flag: type=%d txt=%d flag=%02hhx",
                           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
             }
-            setting = &g_settings[MONSTER_BOSS_SETTING_STR];
+            setting = &g_settings[MONSTER_BOSS_SETTING];
         } else if (type_flag & MONSTER_MINION) {
             if ((type_flag & MONSTER_MINION) != MONSTER_MINION)  {
                 LOG_DEBUG("Unknown MONSTER_MINION type flag: type=%d txt=%d flag=%02hhx",
                           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
             }
-            setting = &g_settings[MONSTER_MINION_SETTING_STR];
+            setting = &g_settings[MONSTER_MINION_SETTING];
         } else if (type_flag & (MONSTER_POSSESSED | MONSTER_GHOSTLY | MONSTER_MULTISHOT)) {
-            setting = &g_settings[MONSTER_BOSS_SETTING_STR];
+            setting = &g_settings[MONSTER_BOSS_SETTING];
             LOG_DEBUG("Unknown MONSTER (possessed / ghostly / multishot) type flag: type=%d txt=%d flag=%02hhx",
                       u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         // } else if (type_flag & MONSTER_NORMAL) {
@@ -199,9 +200,9 @@ static bool draw_unit_callback(void *node_value, void *data)
         //         LOG_DEBUG("Unknown MONSTER_NORMAL type flag: type=%d txt=%d flag=%02hhx",
         //                   u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         //     }
-        //     setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+        //     setting = &g_settings[MONSTER_NORMAL_SETTING];
         } else {
-            setting = &g_settings[MONSTER_NORMAL_SETTING_STR];
+            setting = &g_settings[MONSTER_NORMAL_SETTING];
             // LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
             //           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         }
@@ -209,7 +210,7 @@ static bool draw_unit_callback(void *node_value, void *data)
         // TODO: chest / shrine
         return FALSE;
     } else {
-        // setting = &g_settings[UNKNOWN_SETTING_STR];
+        // setting = &g_settings[BORING_SETTING];
         // LOG_INFO("Unknown Unit: id=%d type=%d txt=%d",
         //          u->dwUnitId, u->dwType, u->dwTxtFileNo);
         // log_UnitAny(u);
@@ -241,15 +242,15 @@ void draw_map(GameState *game)
                   ((float)r2->dwPosY - (float)game->level->dwPosY) / max_size,
                   (float)r2->dwSizeX / max_size,
                   (float)r2->dwSizeY / max_size,
-                  r2->pRoom1 ? &g_settings[EXPLORED_AREAS_SETTING_STR].color
-                  : &g_settings[CURRENT_LEVEL_SETTING_STR].color); //room2
+                  r2->pRoom1 ? &g_settings[EXPLORED_AREAS_SETTING].color
+                  : &g_settings[CURRENT_LEVEL_SETTING].color); //room2
 
         // for (Room1 *r1 = r2->pRoom1; r1; r1 = r1->pNext) {
         //     draw_rect((float)(r1->dwPosXBig / 5.f - game->level->dwPosX) / max_size,
         //               (float)(r1->dwPosYBig / 5.f - game->level->dwPosY) / max_size,
         //               (float)r1->dwSizeXBig / 5.f / max_size,
         //               (float)r1->dwSizeYBig / 5.f / max_size,
-        //               &g_settings[EXPLORED_AREAS_SETTING_STR].color); //room1
+        //               &g_settings[EXPLORED_AREAS_SETTING].color); //room1
         // }  // this doesn't show much actually
     }
 
@@ -263,5 +264,5 @@ void draw_map(GameState *game)
 
     draw(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
          ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
-         &g_settings[PLAYER_SETTING_STR]); //player
+         &g_settings[PLAYER_SETTING]); //player
 }
