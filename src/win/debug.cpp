@@ -176,14 +176,17 @@ static void draw_preset_debug(GameState *game)
             ImGui::Text("%s (%s: %s)", info->name, info->classId, info->desc);
 
         } else if (pu->dwType == UNIT_TILE) {
-            if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
+            const TileInfo *_info = &TILE_INFO[pu->dwTxtFileNo];
+            const UniqueTileInfo *info = &UNIQUE_TILE_INFO[_info->uid];
+
+            if (is_backward_tile(info)) { //probably not what you're searching for
                 ImGui::Text(LEVEL_CONNECTION_UP_SETTING_STR);
             } else {
                 ImGui::Text(LEVEL_CONNECTION_DOWN_SETTING_STR);
             }
 
             ImGui::SameLine(NAME_OFFSET);
-            ImGui::Text("Tile: TODO");
+            ImGui::Text("%s (%d)", info->name, info->notUniqueId);
         } else { // ???
             ImGui::Text(UNKNOWN_SETTING_STR);
         }

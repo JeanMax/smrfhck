@@ -98,7 +98,10 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             }
 
         } else if (pu->dwType == UNIT_TILE) {
-            if (is_backward_tile(pu->dwTxtFileNo)) { //probably not what you're searching for
+            const TileInfo *_info = &TILE_INFO[pu->dwTxtFileNo];
+            const UniqueTileInfo *info = &UNIQUE_TILE_INFO[_info->uid];
+
+            if (is_backward_tile(info)) { //probably not what you're searching for
                 setting = &g_settings[LEVEL_CONNECTION_UP_SETTING_STR];
             } else {
                 setting = &g_settings[LEVEL_CONNECTION_DOWN_SETTING_STR];
