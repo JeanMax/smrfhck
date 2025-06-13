@@ -56,6 +56,7 @@ LDLIBS = $(LSMRF_LIB)
 
 # linking flags
 LDFLAGS =
+RLDFLAGS = -s -flto=auto -Wl,-O2,--sort-common,--as-needed  # release
 
 # compilation flags
 CPPFLAGS =
@@ -68,8 +69,8 @@ CPPFLAGS =
 
 # compilation/linking flags for the differents public rules
 WFLAGS = -std=c++23 -Wextra -Wall  # warnings
-RCFLAGS = $(WFLAGS) -O2  # release
-DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG  # debug
+RCFLAGS = $(WFLAGS) -O3 -fomit-frame-pointer -flto=auto  # release
+DCFLAGS = $(WFLAGS) -g -Og -DNDEBUG -D_FORTIFY_SOURCE=2 -D_GLIBCXX_ASSERTIONS  # debug
 SCFLAGS = $(DCFLAGS) -fsanitize=address,undefined  # sanitize
 WWFLAGS = $(WFLAGS) -Wpedantic -Woverloaded-virtual \
                     -Wfloat-equal -Wwrite-strings -Wcast-align -Wconversion \
@@ -140,7 +141,7 @@ endif
 all:
 	+$(SUB_MAKE) $(LSMRF_DIR)
 	+$(MAKE) $(PROJECT)$(PROJ_SUF) "CFLAGS = $(RCFLAGS)" "OBJ_PATH = $(OBJ_DIR)/rel$(OS)" \
-        "LDFLAGS = $(LDFLAGS) -s"
+        "LDFLAGS = $(RLDFLAGS)"
 
 # masochist build
 mecry:
