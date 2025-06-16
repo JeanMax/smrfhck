@@ -11,7 +11,7 @@ std::atomic_bool g_exit_now = false;
 
 static bool redirect_output_to_file(const char *filename)
 {
-    int fd = open(filename, O_CREAT | O_RDWR, 00644);
+    int fd = open(filename, O_CREAT | O_RDWR | O_TRUNC, 00644);
     if (fd < 0) {
         LOG_ERROR("Can't redirect output to logfile (will you ever read this?!)");
         return FALSE;
