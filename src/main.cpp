@@ -97,10 +97,15 @@ static void game_refresher(void *data)
 #endif
 
     while (!g_exit_now) {
-        if (!update_game_state(game)) {
+        auto tick = std::chrono::high_resolution_clock::now();
+        bool update_success = update_game_state(game);
+        auto tack = std::chrono::high_resolution_clock::now();
+        auto duration = duration_cast<std::chrono::milliseconds>(tack - tick);
+        LOG_DEBUG("frame took %dms", duration.count());
+        if (!update_success) {
             std::this_thread::sleep_for(fail_delay);
         } else {
-            std::this_thread::sleep_for(frame_delay);
+            std::this_thread::sleep_for(frame_delay - duration);
         }
     }
     g_exit_now = false;
