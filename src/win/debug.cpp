@@ -22,8 +22,8 @@ static bool draw_unit_debug_callback(void *node_value, void *data)
     GameState *game = (GameState *)data;
     UnitAny *u = (UnitAny *)node_value;
 
-    ImVec2 player((float)game->player.pPath->xPos,
-                  (float)game->player.pPath->yPos);
+    ImVec2 player((float)game->player->pPath->xPos,
+                  (float)game->player->pPath->yPos);
 
     ImVec2 unit((float)u->pPath->xPos,
                 (float)u->pPath->yPos);
@@ -108,8 +108,8 @@ static void draw_preset_debug(GameState *game)
 {
     std::map<qword, PresetUnit *> preset_map;
 
-    ImVec2 player((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX,
-                  (float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY);
+    ImVec2 player((float)game->player->pPath->xPos / 5.f - (float)game->level->dwPosX,
+                  (float)game->player->pPath->yPos / 5.f - (float)game->level->dwPosY);
 
     for (Room2 *r2 = game->level->pRoom2First; r2; r2 = r2->pNext) {
         for (PresetUnit *pu = r2->pPreset; pu; pu = pu->pNext) {

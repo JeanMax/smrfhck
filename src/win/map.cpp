@@ -262,7 +262,7 @@ void draw_map(GameState *game)
     game->level->_2 = (dword)max_size;  // erk, sorry
     hiter(g_unit_table, draw_unit_callback, game);
 
-    draw(((float)game->player.pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
-         ((float)game->player.pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
+    draw(((float)game->player->pPath->xPos / 5.f - (float)game->level->dwPosX) / max_size,
+         ((float)game->player->pPath->yPos / 5.f - (float)game->level->dwPosY) / max_size,
          &g_settings[PLAYER_SETTING]); //player
 }
