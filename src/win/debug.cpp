@@ -41,6 +41,7 @@ static bool draw_unit_debug_callback(void *node_value, void *data)
         ImGui::Text(OTHER_PLAYERS_SETTING_STR);
         ImGui::SameLine(NAME_OFFSET);
         ImGui::Text("[%s]", u->pPlayerData->szName);
+
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
         const MonsterInfo *info = NULL;
         const SuperInfo *super_info = NULL;
@@ -89,12 +90,23 @@ static bool draw_unit_debug_callback(void *node_value, void *data)
         } else {
             ImGui::Text("{dunno}");
         }
+
     } else if (u->dwType == UNIT_OBJECT) {
         const ObjectInfo *info = &OBJECT_INFO[u->dwTxtFileNo];
         // TODO: chest / shrine
         ImGui::Text("Object: TODO");
         ImGui::SameLine(NAME_OFFSET);
         ImGui::Text("%s (%s: %s)", info->name, info->classId, info->desc);
+
+    } else if (u->dwType == UNIT_MISSILE) {
+        const MissileInfo *info = &MISSILE_INFO[u->dwTxtFileNo];
+        ImGui::Text(MISSILE_SETTING_STR);
+        ImGui::SameLine(NAME_OFFSET);
+        ImGui::Text("%s (mine=%d, skill=%d)",
+                    info->name,
+                    u->pMissileData->ownerId == game->player->dwUnitId,
+                    u->pMissileData->skillId);
+
     } else {
         ImGui::Text("n/a");
         ImGui::SameLine(NAME_OFFSET);

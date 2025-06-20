@@ -61,6 +61,8 @@
 #define MONSTER_CHAMP_SETTING_STR         "Monster Champ"
 #define MONSTER_NORMAL_SETTING_STR        "Monster Normal"
 
+#define MISSILE_SETTING_STR               "Missile"
+
 #define BORING_SETTING_STR                "Not Interesting"
 
 #define EXPLORED_AREAS_SETTING_STR        "Explored Areas"
@@ -85,6 +87,8 @@ enum SettingId {
     MONSTER_BOSS_SETTING,
     MONSTER_CHAMP_SETTING,
     MONSTER_NORMAL_SETTING,
+
+    MISSILE_SETTING,
 
     BORING_SETTING,
 

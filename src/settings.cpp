@@ -32,6 +32,9 @@ Setting g_settings[MAX_SETTINGS] = {
     {.name=MONSTER_NORMAL_SETTING_STR,
          .color=ImColor(COLOR_WHITE_2, 0.8f), .size=0.007f, .is_circle=1},
 
+    {.name=MISSILE_SETTING_STR,
+         .color=ImColor(COLOR_WHITE_1, 0.1f), .size=0.007f, .is_circle=1},
+
     {.name=BORING_SETTING_STR,
          .color=ImColor(COLOR_WHITE_1, 0.1f), .size=0.007f, .is_circle=1},
 

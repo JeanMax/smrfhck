@@ -206,9 +206,14 @@ static bool draw_unit_callback(void *node_value, void *data)
             // LOG_DEBUG("Unknown MONSTER type flag: id=%d type=%d txt=%d flag=%02hhx",
             //           u->dwUnitId, u->dwType, u->dwTxtFileNo, type_flag);
         }
+
     } else if (u->dwType == UNIT_OBJECT) {
         // TODO: chest / shrine
         return FALSE;
+
+    } else if (u->dwType == UNIT_MISSILE) {
+        setting = &g_settings[MISSILE_SETTING];
+
     } else {
         // setting = &g_settings[BORING_SETTING];
         // LOG_INFO("Unknown Unit: id=%d type=%d txt=%d",
