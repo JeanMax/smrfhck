@@ -37,7 +37,7 @@ inline static void frame_callback(void *data)
                              ImGuiCond_FirstUseEver);
     if (ImGui::Begin(PROG_NAME)) {
         pthread_mutex_lock(&game->mutex);
-        if (!game->level) {
+        if (!game->level || !game->player) {
             ImGui::Text("%s", *game->status ? game->status : "Loading...");
         } else {
             draw_map(game);

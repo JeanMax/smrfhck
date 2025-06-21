@@ -91,7 +91,7 @@ static void draw_presets(Room2 *r2, Level *level, float max_size)
             } else if (is_portal(info)) {
                 setting = &g_settings[ENTRANCE_DOWN_SETTING];
             } else if (is_transit(info)) {
-                LOG_ERROR("This shouldn't happen: is_transit()");
+                LOG_ERROR("This shouldn't happen: is_transit()");  //TODO: it does
                 setting = &g_settings[ENTRANCE_UP_SETTING];
             } else {
                 // continue;
