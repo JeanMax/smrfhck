@@ -7,7 +7,11 @@ SMRF_ICO=smrf.ico
 WINE_PREFIX="$HOME/Games/battlenet"
 RESOURCEHACKER_EXE="$WINE_PREFIX/drive_c/Program Files (x86)/Resource Hacker/ResourceHacker.exe"
 
-test "$FORCE" || make mrproper
+if ! test "$FORCE"; then
+    make mrproper
+    OS=Windows_NT make mrproper
+fi
+
 for i in "" dev; do
     make $i
     OS=Windows_NT make $i

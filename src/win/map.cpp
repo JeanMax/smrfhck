@@ -143,6 +143,7 @@ static bool draw_unit_callback(void *node_value, void *data)
 
     if (u->dwType == UNIT_PLAYER) {
         setting = &g_settings[OTHER_PLAYERS_SETTING];
+        //TODO: display summons as friendly
 
     } else if (u->dwType == UNIT_MONSTER) { //monster/npc
         const MonsterInfo *info = NULL;
