@@ -87,6 +87,7 @@ inline static void frame_callback(void *data)
 
 static void game_refresher(void *data)
 {
+    // TODO: define these, link it to PID_REFRESH_RATE
     GameState *game = (GameState *)data;
     std::chrono::duration fail_delay = std::chrono::milliseconds(300);
 #ifdef NDEBUG
